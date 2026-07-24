@@ -1,0 +1,35 @@
+{
+  "version": 1,
+  "aliases": {
+    "douyin_collect_hot_keywords": {
+      "mcp_tool": null,
+      "description": "intentional stub；蝉妈妈/原子采集待接",
+      "allow_in_skills": ["douyin-keyword-research"]
+    },
+    "douyin_expand_suggest_words": {
+      "mcp_tool": null,
+      "description": "intentional stub",
+      "allow_in_skills": ["douyin-keyword-research"]
+    },
+    "ping": {
+      "mcp_tool": "ping",
+      "server": "example_tools",
+      "allow_in_skills": [],
+      "description": "健康检查（不进业务 Skill）"
+    },
+    "temu_product_issue_submit": {
+      "mcp_tool": "temu_product_issue_submit",
+      "server": "platform_mcp",
+      "requires_mcp": true,
+      "allow_in_skills": ["temu-product-listing"],
+      "description": "Commander Temu product_issue 提交（黑盒）"
+    },
+    "temu_product_issue_status": {
+      "mcp_tool": "temu_product_issue_status",
+      "server": "platform_mcp",
+      "requires_mcp": true,
+      "allow_in_skills": ["temu-product-listing"],
+      "description": "Commander task_list 轮询上架状态"
+    }
+  }
+}

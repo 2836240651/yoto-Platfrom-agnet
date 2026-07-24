@@ -1,0 +1,51 @@
+# Platform MCP + Agent API on the same host, shared Excel volume.
+# Absolute path is identical in both containers: /data/platform-mcp/uploads
+
+services:
+  platform-mcp:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: platform-mcp:local
+    container_name: platform-mcp
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      FASTMCP_HOST: "0.0.0.0"
+      FASTMCP_PORT: "18765"
+      FASTMCP_TRANSPORT: streamable-http
+    ports:
+      - "127.0.0.1:18765:18765"
+    volumes:
+      - /data/platform-mcp/uploads:/data/platform-mcp/uploads:ro
+    networks:
+      - platform
+
+  agent-api:
+    build:
+      context: /data/agent-platform/app
+      dockerfile: mcp/deploy/api.Dockerfile
+    image: agent-platform-api:local
+    container_name: agent-platform-api
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      AGENT_ENV: prod
+      MCP_RUNTIME_ENABLED: "true"
+      MCP_ALLOW_STUB_FALLBACK: "false"
+      MCP_CONFIG_PATH: /app/config/mcp.docker.json
+      UPLOAD_ROOT: /data/platform-mcp/uploads
+    ports:
+      - "127.0.0.1:18000:8000"
+    volumes:
+      - /data/platform-mcp/uploads:/data/platform-mcp/uploads
+    depends_on:
+      - platform-mcp
+    networks:
+      - platform
+
+networks:
+  platform:
+    name: agent-platform-net

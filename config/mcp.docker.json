@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "platform_mcp": {
+      "transport": "streamable_http",
+      "url": "http://platform-mcp:18765/mcp"
+    }
+  }
+}

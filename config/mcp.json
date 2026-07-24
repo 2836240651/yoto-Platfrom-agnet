@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "example_tools": {
+      "transport": "stdio",
+      "command": "python",
+      "args": ["mcp/servers/example_server.py"],
+      "env": {}
+    },
+    "platform_mcp": {
+      "transport": "streamable_http",
+      "url": "https://www.yoto.work/platform-mcp/mcp"
+    }
+  }
+}

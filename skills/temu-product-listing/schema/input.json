@@ -1,0 +1,26 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["excel_path", "shop_id"],
+  "properties": {
+    "excel_path": {
+      "type": "string",
+      "description": "Path to xlsx readable by the MCP gateway host"
+    },
+    "shop_id": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Temu shop id (Dianxiaomi)"
+    },
+    "platform": {
+      "type": "string",
+      "const": "temu",
+      "default": "temu"
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "Commander agent id; default 肉机"
+    }
+  },
+  "additionalProperties": false
+}

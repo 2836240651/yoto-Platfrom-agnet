@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["ok", "status", "message"],
+  "properties": {
+    "ok": { "type": "boolean" },
+    "status": {
+      "type": "string",
+      "enum": ["processing", "success", "failed", "cancelled", "unknown"]
+    },
+    "message": { "type": "string" },
+    "task_id": { "type": ["string", "null"] },
+    "shop_id": { "type": "string" },
+    "agent_id": { "type": "string" }
+  },
+  "additionalProperties": true
+}
