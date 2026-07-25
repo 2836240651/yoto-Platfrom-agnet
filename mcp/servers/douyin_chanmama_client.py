@@ -40,30 +40,9 @@ _BRIDGE_MAP: dict[str, list[str]] = {
 
 
 def bridge_seeds(seed: str) -> list[str]:
-    """Build searchable parent/variant seeds when the exact seed is unindexed."""
-    s = (seed or "").strip()
-    out: list[str] = []
-    if s in _BRIDGE_MAP:
-        out.extend(_BRIDGE_MAP[s])
-    for suffix in ("钓法", "教程", "技巧", "钓", "法"):
-        if s.endswith(suffix) and len(s) > len(suffix) + 1:
-            base = s[: -len(suffix)]
-            out.append(base)
-            out.extend(_BRIDGE_MAP.get(base, []))
-            break
-    # Always include broad fishing anchors for 渔具 niche
-    if any(k in s for k in ("钓", "鱼", "鲤", "鲈", "鲶", "饵", "竿", "路亚")):
-        out.extend(["钓鱼", "渔具", "线组"])
-    # de-dupe preserve order, drop exact seed (handled separately)
-    seen: set[str] = set()
-    final: list[str] = []
-    for w in out:
-        w = w.strip()
-        if not w or w == s or w in seen:
-            continue
-        seen.add(w)
-        final.append(w)
-    return final[:8]
+    """Return no implicit bridges; query expansion must be explicitly planned upstream."""
+    del seed
+    return []
 
 
 def profile_dir() -> Path:
@@ -294,6 +273,7 @@ class ChanmamaSession:
         product_rows: list[dict[str, Any]] = []
         seed_mode = "direct"
         bridges_used: list[str] = []
+        attempts: list[dict[str, Any]] = []
 
         def _ingest_relation(query: str, *, side: str = "video") -> int:
             rel = self.api_get(
@@ -327,48 +307,26 @@ class ChanmamaSession:
             for item in batch:
                 if item["word"] in {seed, query}:
                     continue
-                item["seed_related"] = True
-                item["bridge"] = query
+                item["queried_term"] = query
+                item["query_level"] = "exact"
+                item["relation_to_seed"] = "exact_query_relation"
+                item["source_route"] = "relation_word"
                 video_rows.append(item)
                 n += 1
+            attempts.append(
+                {
+                    "term": query,
+                    "level": "exact",
+                    "route": "relation_word",
+                    "result_count": n,
+                }
+            )
             return n
 
-        # --- Video / content: seed first, then bridge parents if unindexed ---
+        # --- Video / content: exact seed only; no implicit parent fallback. ---
         if include_video:
             got = _ingest_relation(seed)
-            if got == 0:
-                seed_mode = "bridge"
-                for b in bridge_seeds(seed):
-                    n = _ingest_relation(b)
-                    if n:
-                        bridges_used.append(b)
-                # also try search endpoint on bridges
-                for b in bridges_used[:3] or bridge_seeds(seed)[:3]:
-                    search = self.api_get(
-                        "/v1/hot_search_analysis/search",
-                        {"keyword": b, "keyword_type": 1},
-                    )
-                    traces.append(
-                        {
-                            "tool": "hot_search_analysis/search",
-                            "query": b,
-                            "errCode": search.get("errCode"),
-                        }
-                    )
-                    if search.get("errCode") in (0, "0", None):
-                        batch = []
-                        _extract_words_from_obj(
-                            (search.get("data") or {}).get("aweme_keyword_relation_resp_list"),
-                            batch,
-                            side="video",
-                            bucket="hot",
-                        )
-                        for item in batch:
-                            if item["word"] in {seed, b}:
-                                continue
-                            item["bridge"] = b
-                            video_rows.append(item)
-            else:
+            if got:
                 search = self.api_get(
                     "/v1/hot_search_analysis/search",
                     {"keyword": seed, "keyword_type": 1},
@@ -390,7 +348,7 @@ class ChanmamaSession:
                         video_rows.append(item)
 
         # --- Product: ecommerce hot-word rank + SKU-like relation words ---
-        product_queries = [seed] + (bridges_used or bridge_seeds(seed)[:4])
+        product_queries = [seed]
         if include_product:
             for cat_id, cat_name in (
                 (CATEGORY_SPORTS, "运动户外"),
@@ -433,7 +391,10 @@ class ChanmamaSession:
                             bucket=bucket,
                         )
                         for item in batch:
-                            item["bridge"] = q
+                            item["queried_term"] = q
+                            item["query_level"] = "exact"
+                            item["relation_to_seed"] = "exact_query_relation"
+                            item["source_route"] = "hot_search_rank"
                             product_rows.append(item)
                 if product_rows:
                     break
@@ -461,9 +422,13 @@ class ChanmamaSession:
             {
                 "word": x["word"],
                 "hot_level": x.get("hot_level") or 0,
+                "compete_index": x.get("compete_index"),
                 "side": x.get("side"),
                 "bucket": x.get("bucket"),
-                "bridge": x.get("bridge"),
+                "queried_term": x.get("queried_term"),
+                "query_level": x.get("query_level"),
+                "relation_to_seed": x.get("relation_to_seed"),
+                "source_route": x.get("source_route"),
             }
             for x in (video_hot + video_potential + product_hot + product_potential)
         ]
@@ -476,6 +441,9 @@ class ChanmamaSession:
             "seed": seed,
             "seed_mode": seed_mode,
             "bridges_used": bridges_used,
+            "attempts": attempts,
+            "coverage_state": "exact_hit" if ok else "coverage_gap",
+            "fallback_used": False,
             "date_range_days": date_range_days,
             "keywords": keywords,
             "count": len(keywords),

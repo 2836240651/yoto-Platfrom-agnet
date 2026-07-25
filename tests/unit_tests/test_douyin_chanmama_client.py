@@ -15,11 +15,9 @@ def test_seed_related():
     assert not client._seed_related("手机壳", "渔具")
 
 
-def test_bridge_seeds_for_niche():
-    bridges = client.bridge_seeds("欧鲤钓")
-    assert "鲤鱼" in bridges or "钓鱼" in bridges
-    bridges2 = client.bridge_seeds("反底钓")
-    assert "线组" in bridges2 or "钓鱼" in bridges2
+def test_bridge_seeds_do_not_implicitly_expand_niche_terms():
+    assert client.bridge_seeds("欧鲤钓") == []
+    assert client.bridge_seeds("反底钓") == []
 
 
 def test_extract_and_dedupe():
