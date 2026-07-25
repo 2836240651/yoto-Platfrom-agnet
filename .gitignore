@@ -11,6 +11,8 @@ __pycache__/
 build/
 develop-eggs/
 dist/
+!apps/meat-worker/release/
+!apps/meat-worker/release/**
 downloads/
 eggs/
 .eggs/
@@ -33,8 +35,8 @@ MANIFEST
 *.spec
 !apps/meat-worker/meat_worker.spec
 
-# Meat worker build output (copy whole folder to idle host)
-# dist/ already ignored above
+# Meat worker: prebuilt EXE lives in apps/meat-worker/release/ (committed).
+# PyInstaller scratch stays under dist/ (ignored).
 
 # Installer logs
 pip-log.txt

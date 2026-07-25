@@ -6,10 +6,10 @@
 
 ## 肉机每日开机（同机双进程 / 空闲机 EXE）
 
-**推荐（空闲机）：** 拷贝 `dist\meat-worker\` 整夹，见 [`meat-worker-exe.md`](./meat-worker-exe.md)。
+**推荐（空闲机 · 无需打包）：** 拷贝仓库内 [`apps/meat-worker/release/`](../../apps/meat-worker/release/) 整夹，见 [`meat-worker-exe.md`](./meat-worker-exe.md)。
 
 ```text
-1. 编辑 D:\meat-worker\config.json 填入 worker_token
+1. 编辑 release\config.json 填入 worker_token
 2. 运行 MeatWorker.exe → 托盘「登录蝉妈妈」→ 图标变绿
 3. 服务器工具状态应显示抖音肉机在线
 ```

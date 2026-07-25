@@ -1,9 +1,7 @@
 # -*- mode: python ; coding: utf-8 -*-
-# PyInstaller onedir for MeatWorker.exe — run via scripts/build-meat-worker.bat
+# Slim onedir for apps/meat-worker/release/ — system Chrome preferred at runtime.
 
 from pathlib import Path
-
-from PyInstaller.utils.hooks import collect_all
 
 ROOT = Path(SPECPATH).resolve().parents[1]
 MW = ROOT / "apps" / "meat-worker"
@@ -13,7 +11,7 @@ datas = [
     (str(CLIENT), "."),
     (str(MW / "config.example.json"), "."),
 ]
-binaries = []
+
 hiddenimports = [
     "pystray._win32",
     "PIL",
@@ -30,21 +28,23 @@ hiddenimports = [
     "ui.tray_app",
 ]
 
-tmp_ret = collect_all("playwright")
-datas += tmp_ret[0]
-binaries += tmp_ret[1]
-hiddenimports += tmp_ret[2]
-
 a = Analysis(
     [str(MW / "__main__.py")],
     pathex=[str(MW), str(ROOT / "mcp" / "servers")],
-    binaries=binaries,
+    binaries=[],
     datas=datas,
     hiddenimports=hiddenimports,
     hookspath=[],
     hooksconfig={},
     runtime_hooks=[],
-    excludes=[],
+    excludes=[
+        "numpy",
+        "scipy",
+        "pandas",
+        "patchright",
+        "matplotlib",
+        "tkinter.test",
+    ],
     noarchive=False,
     optimize=0,
 )

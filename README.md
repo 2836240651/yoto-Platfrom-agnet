@@ -17,10 +17,10 @@
 
 ### 肉机助手（标识 · 必读）
 
-抖音真实采集跑在**空闲/肉机 PC** 上，不是服务器里的脚本常驻：
+抖音真实采集跑在**空闲/肉机 PC** 上。仓库内已带好可运行包，**不必再本地打包**：
 
-- 源码：[`apps/meat-worker/`](apps/meat-worker/)（托盘 EXE）
-- 构建：`scripts\build-meat-worker.bat` → `dist\meat-worker\`（整夹拷到空闲机）
+- **可运行包（直接下载）**：[`apps/meat-worker/release/`](apps/meat-worker/release/) → 解压/拷贝整夹 → 填 `config.json` 的 `worker_token` → 双击 `MeatWorker.exe`
+- 源码：[`apps/meat-worker/`](apps/meat-worker/)
 - 文档：[`docs/wip/meat-worker-exe.md`](docs/wip/meat-worker-exe.md) · [`docs/wip/douyin-meat-ops-runbook.md`](docs/wip/douyin-meat-ops-runbook.md)
 - 架构：服务器 `platform_mcp` 入队 ← 肉机 `MeatWorker.exe` 出站 claim/complete（与 Temu 的 Commander Agent **同角色、不同进程**）
 

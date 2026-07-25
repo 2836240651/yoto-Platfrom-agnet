@@ -1,0 +1,10 @@
+{
+  "worker_url": "https://www.yoto.work/platform-mcp",
+  "worker_token": "",
+  "worker_id": "闲置机-1",
+  "poll_s": 3,
+  "headed": false,
+  "chrome_user_data_dir": "",
+  "use_system_chrome": true,
+  "claim_enabled": true
+}
