@@ -12,6 +12,7 @@ import { DevMcpPage } from './pages/DevMcpPage'
 import { TemuListingPage } from './pages/TemuListingPage'
 import { SocialPublishPage } from './pages/SocialPublishPage'
 import { ToolsStatusPage } from './pages/ToolsStatusPage'
+import { BossPlatformPage } from './pages/BossPlatformPage'
 import './styles/global.css'
 
 export default function App() {
@@ -21,6 +22,8 @@ export default function App() {
         <Route element={<Layout />}>
           <Route path="/" element={<HomePage />} />
           <Route path="/tools" element={<ToolsStatusPage />} />
+          <Route path="/boss" element={<BossPlatformPage />} />
+          <Route path="/boss/:platform" element={<BossPlatformPage />} />
           <Route path="/tasks" element={<TaskListPage />} />
           <Route path="/tasks/new" element={<NewTaskPage />} />
           <Route path="/tasks/temu" element={<TemuListingPage />} />
