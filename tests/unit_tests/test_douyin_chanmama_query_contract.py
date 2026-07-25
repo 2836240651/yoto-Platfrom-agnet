@@ -37,7 +37,7 @@ def test_empty_exact_query_reports_coverage_gap_without_parent_queries(monkeypat
     assert result["attempts"] == [
         {
             "term": "大物竿",
-            "level": "exact",
+                "level": "seed",
             "route": "relation_word",
             "result_count": 0,
         }
@@ -78,6 +78,6 @@ def test_exact_candidates_keep_query_lineage_and_competition(monkeypatch):
     candidate = result["keywords"][0]
     assert candidate["compete_index"] == 1.2
     assert candidate["queried_term"] == "大物竿"
-    assert candidate["query_level"] == "exact"
+    assert candidate["query_level"] == "seed"
     assert candidate["relation_to_seed"] == "exact_query_relation"
     assert candidate["source_route"] == "relation_word"

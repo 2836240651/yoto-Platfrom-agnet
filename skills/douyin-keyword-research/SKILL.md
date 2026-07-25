@@ -39,3 +39,11 @@ Profile：`DOUYIN_CHROME_USER_DATA_DIR` 或默认 `.local/chanmama-chrome`（不
 | include_video | bool | 分析视频侧词 |
 | include_product | bool | 分析商品侧词 |
 | model_id | string? | 可选会话模型钉扎（分析步生效） |
+
+## Exact-query Diagnostic Policy (mandatory)
+
+- Call `douyin_collect_hot_keywords` with the exact seed first. Do not silently substitute broad terms such as fishing or tackle.
+- Read `status` and `diagnostics` before analysis. `no_data` must be reported truthfully with its diagnostic counts; `upstream_error` and `parse_error` require investigation, never generated keywords. An `errCode` such as `55006` is an upstream observation, not proof that a broad seed permanently has no data; retain the HTTP status, raw count, parsed count, and timestamp before concluding.
+- Only send expansion terms through an explicit `query_plan`; every item needs `term` and `source`. Preserve `queried_term`, `query_level`, and `query_source` in all downstream reasoning and reports.
+- Never present an expansion result as evidence for the original seed.
+- When operations need to verify browser automation, use the meat worker's authorized **有头浏览器** mode for one real collection task and record only page URL/title, HTTP status, errCode, raw count, and parsed count. Never expose Cookie or Token.

@@ -66,6 +66,7 @@ def handle_douyin_collect(job: dict[str, Any], cfg: "MeatConfig") -> dict[str, A
         date_range_days=int(args.get("date_range_days") or 30),
         include_video=bool(args.get("include_video", True)),
         include_product=bool(args.get("include_product", True)),
+        query_plan=args.get("query_plan") if isinstance(args.get("query_plan"), list) else None,
         headed=bool(cfg.headed),
     )
     if isinstance(result, dict):

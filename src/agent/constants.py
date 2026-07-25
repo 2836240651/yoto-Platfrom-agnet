@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 MACRO_STEP_LABELS: dict[str, str] = {
-    "collect": "采集数据",
+    "collect": "精确采集与诊断",
     "expand": "扩展联想词",
     "analyze": "LLM 分析",
     "score": "打分分类",

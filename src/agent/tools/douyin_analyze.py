@@ -14,6 +14,13 @@ from agent.state import AgentState
 
 _BUCKETS = ("video_hot", "video_potential", "product_hot", "product_potential")
 
+_DOUYIN_ANALYSIS_SYSTEM_PROMPT = (
+    "你是跨境电商抖音选品与内容运营专家。只输出合法 JSON。"
+    "只可基于输入的采集词生成分析；视频侧与商品侧严格分栏，分析要具体可执行。"
+    "不得将 no_data、upstream_error 或 parse_error 转成关键词建议，也不得补造未采集词。"
+    "必须尊重 queried_term、query_level、query_source；显式 query_plan 的扩词不得表述为原种子词的实测结果。"
+)
+
 
 def format_heat(n: int | float | None) -> str:
     """Human-readable Chanmama heat index (never a lone dash)."""
@@ -288,6 +295,8 @@ def analyze_and_optimize(
         f"{json.dumps(product_rows, ensure_ascii=False)}\n\n"
         "任务：做抖音「视频内容」与「商品带货」双侧运营深分析。"
         "严禁编造未出现的词；严禁视频词进商品栏、商品词进视频栏。\n"
+        "每个输入词携带 queried_term、query_level、query_source 查询血缘；不得丢弃、替换，"
+        "也不得把显式扩词的结果写成原种子词的实测结果。\n"
         "输出 JSON（不要 markdown）：\n"
         "{\n"
         '  "video_hot":[{"keyword":"..","priority":"P0|P1|P2","reason":"..","action":"..","evidence":[".."]}],\n'
@@ -313,10 +322,7 @@ def analyze_and_optimize(
         analyzed = _llm_json(
             state,
             task="ops_analysis",
-            system=(
-                "你是跨境电商抖音选品与内容运营专家。"
-                "只输出合法 JSON。视频侧与商品侧严格分栏，分析要具体可执行。"
-            ),
+            system=_DOUYIN_ANALYSIS_SYSTEM_PROMPT,
             user=analyze_prompt,
         )
     except Exception as exc:  # noqa: BLE001

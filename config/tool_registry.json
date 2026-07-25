@@ -5,7 +5,7 @@
       "mcp_tool": "douyin_collect_hot_keywords",
       "server": "platform_mcp",
       "requires_mcp": true,
-      "description": "服务器 platform_mcp 入队；肉机 Worker 本机 Playwright 采集（禁止 stub）",
+      "description": "服务器 platform_mcp 入队；肉机精确查询并返回脱敏诊断（先读取 status 与 diagnostics；禁止 stub、禁止隐式泛词回退）",
       "allow_in_skills": ["douyin-keyword-research"]
     },
     "douyin_chanmama_auth_status": {

@@ -140,6 +140,7 @@ def enqueue_collect(
     date_range_days: int = 30,
     include_video: bool = True,
     include_product: bool = True,
+    query_plan: list[dict[str, str]] | None = None,
 ) -> dict[str, Any]:
     job_id = uuid.uuid4().hex[:16]
     now = time.time()
@@ -154,6 +155,7 @@ def enqueue_collect(
             "date_range_days": int(date_range_days),
             "include_video": bool(include_video),
             "include_product": bool(include_product),
+            "query_plan": query_plan or [],
         },
         "worker_id": None,
         "result": None,
@@ -208,7 +210,7 @@ def complete_job(
         job["status"] = "done" if ok else "failed"
         job["updated_at"] = time.time()
         job["worker_id"] = wid
-        job["result"] = result if ok else None
+        job["result"] = result
         job["error"] = None if ok else (error or "worker failed")
         dest = root / "done" / f"{job_id}.json"
         _write_json(dest, job)
@@ -256,12 +258,15 @@ def wait_job(
                 return out
             return {"ok": True, "job_id": job_id, "result": result}
         if status == "failed":
-            return {
+            result = job.get("result")
+            out = dict(result) if isinstance(result, dict) else {}
+            out.update({
                 "ok": False,
-                "error": job.get("error") or "肉机采集失败",
+                "error": job.get("error") or out.get("error") or "??????",
                 "job_id": job_id,
-                "need_login": False,
-            }
+                "need_login": bool(out.get("need_login")),
+            })
+            return out
         time.sleep(poll_s)
     return {
         "ok": False,
@@ -277,6 +282,7 @@ def collect_via_worker(
     date_range_days: int = 30,
     include_video: bool = True,
     include_product: bool = True,
+    query_plan: list[dict[str, str]] | None = None,
     timeout_s: float | None = None,
 ) -> dict[str, Any]:
     """Enqueue + wait (MCP tool entry)."""
@@ -299,5 +305,6 @@ def collect_via_worker(
         date_range_days=date_range_days,
         include_video=include_video,
         include_product=include_product,
+        query_plan=query_plan,
     )
     return wait_job(job["id"], timeout_s=timeout)

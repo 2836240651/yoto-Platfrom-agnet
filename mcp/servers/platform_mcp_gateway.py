@@ -151,6 +151,7 @@ async def douyin_collect_hot_keywords(
     date_range_days: int = 30,
     include_video: bool = True,
     include_product: bool = True,
+    query_plan: list[dict[str, str]] | None = None,
 ) -> dict:
     """Enqueue Douyin collect job; poll until meat worker completes or timeout. Never fakes success.
 
@@ -168,6 +169,7 @@ async def douyin_collect_hot_keywords(
             date_range_days=int(date_range_days or 30),
             include_video=bool(include_video),
             include_product=bool(include_product),
+            query_plan=query_plan,
         )
 
     return await anyio.to_thread.run_sync(_run)

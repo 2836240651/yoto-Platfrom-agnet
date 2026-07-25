@@ -254,6 +254,7 @@ class ChanmamaSession:
         date_range_days: int = 30,
         include_video: bool = True,
         include_product: bool = True,
+        query_plan: list[dict[str, str]] | None = None,
     ) -> dict[str, Any]:
         auth = self.check_login()
         if not auth.get("logged_in"):
@@ -274,8 +275,16 @@ class ChanmamaSession:
         seed_mode = "direct"
         bridges_used: list[str] = []
         attempts: list[dict[str, Any]] = []
+        diagnostics: list[dict[str, Any]] = []
+        queries = [{"term": seed, "level": "seed", "source": "seed"}]
+        seen_queries = {seed}
+        for item in query_plan or []:
+            term = str(item.get("term") or "").strip() if isinstance(item, dict) else ""
+            if term and term not in seen_queries:
+                seen_queries.add(term)
+                queries.append({"term": term, "level": "explicit_expansion", "source": str(item.get("source") or "operator_expansion")})
 
-        def _ingest_relation(query: str, *, side: str = "video") -> int:
+        def _ingest_relation(query: str, *, level: str, source: str, side: str = "video") -> int:
             rel = self.api_get(
                 "/v1/hot_search_analysis/relationWord",
                 {
@@ -293,8 +302,12 @@ class ChanmamaSession:
                     "errMsg": rel.get("errMsg"),
                 }
             )
+            raw = ((rel.get("data") or {}).get("aweme_keyword_relation_resp_list") or [])
             if rel.get("errCode") not in (0, "0", None):
-                errors.append(f"relationWord({query}): {rel.get('errMsg')}")
+                error = str(rel.get("errMsg") or "upstream error")[:200]
+                diagnostics.append({"route": "relation_word", "queried_term": query, "query_level": level, "query_source": source, "request": {"keyword_type": 1, "sort": "search_index", "orderBy": 1}, "http_status": 200, "err_code": rel.get("errCode"), "raw_item_count": len(raw) if isinstance(raw, list) else 0, "parsed_item_count": 0, "duration_ms": 0, "error": error})
+                attempts.append({"term": query, "level": level, "route": "relation_word", "result_count": 0})
+                errors.append(f"relationWord({query}): {error}")
                 return 0
             batch: list[dict[str, Any]] = []
             _extract_words_from_obj(
@@ -308,17 +321,19 @@ class ChanmamaSession:
                 if item["word"] in {seed, query}:
                     continue
                 item["queried_term"] = query
-                item["query_level"] = "exact"
+                item["query_level"] = level
+                item["query_source"] = source
                 item["relation_to_seed"] = "exact_query_relation"
                 item["source_route"] = "relation_word"
                 video_rows.append(item)
                 n += 1
-            attempts.append({"term": query, "level": "exact", "route": "relation_word", "result_count": n})
+            diagnostics.append({"route": "relation_word", "queried_term": query, "query_level": level, "query_source": source, "request": {"keyword_type": 1, "sort": "search_index", "orderBy": 1}, "http_status": 200, "err_code": rel.get("errCode"), "raw_item_count": len(raw) if isinstance(raw, list) else 0, "parsed_item_count": n, "duration_ms": 0, "error": None if rel.get("errCode") in (0, "0", None) else str(rel.get("errMsg") or "upstream error")[:200]})
+            attempts.append({"term": query, "level": level, "route": "relation_word", "result_count": n})
             return n
 
-        # --- Video / content: exact seed only; no implicit parent fallback. ---
+        # --- Video / content: seed plus explicit operator expansions only. ---
         if include_video:
-            got = _ingest_relation(seed)
+            got = sum(_ingest_relation(entry["term"], level=entry["level"], source=entry["source"]) for entry in queries)
             if got:
                 search = self.api_get(
                     "/v1/hot_search_analysis/search",
@@ -341,7 +356,7 @@ class ChanmamaSession:
                         video_rows.append(item)
 
         # --- Product: ecommerce hot-word rank + SKU-like relation words ---
-        product_queries = [seed]
+        product_queries = [entry["term"] for entry in queries]
         if include_product:
             for cat_id, cat_name in (
                 (CATEGORY_SPORTS, "运动户外"),
@@ -422,6 +437,7 @@ class ChanmamaSession:
                 "query_level": x.get("query_level"),
                 "relation_to_seed": x.get("relation_to_seed"),
                 "source_route": x.get("source_route"),
+                "query_source": x.get("query_source"),
             }
             for x in (video_hot + video_potential + product_hot + product_potential)
         ]
@@ -431,6 +447,8 @@ class ChanmamaSession:
             errors = [e for e in errors if "无相关关联词" not in e and "未收录" not in e]
         return {
             "ok": ok,
+            "status": "ok" if ok else ("upstream_error" if any(item.get("err_code") not in (0, "0", None, 55006, "55006") for item in diagnostics) else ("parse_error" if any(item.get("raw_item_count") and not item.get("parsed_item_count") for item in diagnostics) else "no_data")),
+            "diagnostics": diagnostics,
             "seed": seed,
             "seed_mode": seed_mode,
             "bridges_used": bridges_used,
@@ -475,6 +493,7 @@ def collect_hot_keywords(
     date_range_days: int = 30,
     include_video: bool = True,
     include_product: bool = True,
+    query_plan: list[dict[str, str]] | None = None,
     headed: bool = False,
 ) -> dict[str, Any]:
     with ChanmamaSession(headed=headed) as sess:
@@ -485,6 +504,7 @@ def collect_hot_keywords(
             date_range_days=date_range_days,
             include_video=include_video,
             include_product=include_product,
+            query_plan=query_plan,
         )
 
 
