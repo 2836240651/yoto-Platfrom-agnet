@@ -347,6 +347,16 @@ def analyze_and_optimize(
             cats[bucket] = upgraded
         fb["categories"] = cats
         fb["ok"] = True
+        # stub helper hardcodes「数据源：stub」tags — rewrite when collect was real MCP.
+        tags = [t for t in (fb.get("tags") or []) if "stub" not in str(t).lower()]
+        if source == "mcp":
+            tags = [t for t in tags if "数据源" not in str(t)]
+            tags.append("数据源：真实 MCP")
+        elif source == "stub_fallback":
+            tags.append("数据源：MCP 失败已降级")
+        else:
+            tags.append(f"数据源：{source}")
+        fb["tags"] = tags
         fb.setdefault("alerts", []).insert(
             0,
             {

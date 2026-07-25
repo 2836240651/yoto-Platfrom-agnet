@@ -21,7 +21,10 @@ app.add_middleware(
         "http://localhost:5179",
         "http://127.0.0.1:5179",
         "http://localhost:4173",
+        "http://127.0.0.1:4173",
+        "null",  # Electron file:// / some desktop shells
     ],
+    allow_origin_regex=r"http://127\.0\.0\.1:\d+",
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

@@ -1,0 +1,71 @@
+{
+  "name": "tuodiao-workspace-desktop",
+  "version": "0.1.2",
+  "private": true,
+  "description": "TUODIAO Workspace desktop shell (bundled web + remote API)",
+  "main": "main.cjs",
+  "author": "TUODIAO",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder --win",
+    "build:web": "npm --prefix ../web run build && node ./scripts/copy-web-dist.cjs"
+  },
+  "build": {
+    "appId": "work.tuodiao.workspace",
+    "productName": "TUODIAO",
+    "copyright": "Copyright TUODIAO",
+    "directories": {
+      "output": "dist-electron",
+      "buildResources": "build"
+    },
+    "asar": true,
+    "files": [
+      "main.cjs",
+      "preload.cjs",
+      "package.json",
+      "build/icon.ico",
+      "build/icon.png",
+      "web-dist/**/*"
+    ],
+    "extraResources": [
+      {
+        "from": "build",
+        "to": "build",
+        "filter": ["icon.ico", "icon.png"]
+      }
+    ],
+    "win": {
+      "icon": "build/icon.ico",
+      "target": [
+        {
+          "target": "nsis",
+          "arch": ["x64"]
+        },
+        {
+          "target": "portable",
+          "arch": ["x64"]
+        }
+      ],
+      "artifactName": "TUODIAO-${version}-${os}-${arch}.${ext}"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "TUODIAO",
+      "installerIcon": "build/icon.ico",
+      "uninstallerIcon": "build/icon.ico",
+      "installerHeaderIcon": "build/icon.ico"
+    },
+    "portable": {
+      "artifactName": "TUODIAO-${version}-portable.exe"
+    }
+  },
+  "devDependencies": {
+    "electron": "^37.2.0",
+    "electron-builder": "^26.0.12"
+  }
+}

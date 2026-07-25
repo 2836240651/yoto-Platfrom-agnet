@@ -12,6 +12,7 @@
 - [`douyin-meat-machine-mcp.md`](./douyin-meat-machine-mcp.md) — 服务器 platform_mcp 下发 · 本机 Worker 出站真采（禁止 stub）；**双肉机手、不合并 Commander Agent**
 - [`douyin-meat-ops-runbook.md`](./douyin-meat-ops-runbook.md) — 运营/运维一页（启手、登录、失败码）
 - [`meat-worker-exe.md`](./meat-worker-exe.md) — 肉机助手 EXE 打包与空闲机拷贝
+- [`workspace-desktop-electron.md`](./workspace-desktop-electron.md) — 成员端跨境智能体 Electron 薄壳（与肉机分离）
 - [`spec-business-scenarios-llm-tool.md`](./spec-business-scenarios-llm-tool.md) — 五场景 LLM vs Tool 边界（§3 抖音）
 - 交接：[`docs/handoffs/2026-07-25-douyin-dual-meat-hands.md`](../handoffs/2026-07-25-douyin-dual-meat-hands.md)
 

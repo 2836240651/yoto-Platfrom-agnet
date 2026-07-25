@@ -1,6 +1,6 @@
 import type { TaskProgress } from '../types/task'
 
-const STEP_LABELS = ['收集上下文', '扩展候选项', '评分聚类', '生成交付']
+const STEP_LABELS = ['采集数据', 'LLM 分析', '生成报告']
 
 interface Props {
   progress?: TaskProgress | null

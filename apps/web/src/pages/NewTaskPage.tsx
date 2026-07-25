@@ -117,7 +117,7 @@ export function NewTaskPage() {
         >
           <strong>将执行：</strong>采集 → 扩展长尾 → 热搜/潜力打分 → 四栏报告
           <br />
-          <span style={{ color: 'var(--muted)' }}>目标数据源：蝉妈妈（当前为 stub，原子 MCP 待接）</span>
+          <span style={{ color: 'var(--muted)' }}>目标数据源：蝉妈妈（肉机 MCP 真采）</span>
         </div>
 
         <label className="checkbox-row" style={{ marginBottom: 16 }}>

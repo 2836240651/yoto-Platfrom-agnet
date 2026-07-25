@@ -43,6 +43,7 @@ const CONTAINER = "agent-platform-api";
 
 const REL_FILES = [
   "src/agent/constants.py",
+  "src/agent/llm.py",
   "src/agent/config/settings.py",
   "src/agent/tools/douyin_analyze.py",
   "src/agent/tools/step_handlers.py",
