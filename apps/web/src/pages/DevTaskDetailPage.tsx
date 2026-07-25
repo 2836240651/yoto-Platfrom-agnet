@@ -6,7 +6,13 @@ import { StatGrid } from '../components/StatGrid'
 import { DevTaskProgressBar } from '../components/DevTaskProgress'
 import { DevLoopPanel } from '../components/DevLoopPanel'
 import { TemuListingReportView } from '../components/TemuListingReportView'
-import { isDouyinReport, isTemuListingReport, type TaskDetail } from '../types/task'
+import { SocialPublishReportView } from '../components/SocialPublishReportView'
+import {
+  isDouyinReport,
+  isSocialPublishReport,
+  isTemuListingReport,
+  type TaskDetail,
+} from '../types/task'
 
 export function DevTaskDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -48,7 +54,11 @@ export function DevTaskDetailPage() {
   }
 
   const retryTo =
-    task.skill === 'temu-product-listing' ? '/dev/tasks/temu' : '/dev/tasks/new'
+    task.skill === 'temu-product-listing'
+      ? '/dev/tasks/temu'
+      : task.skill === 'social-media-publish'
+        ? '/dev/tasks/social'
+        : '/dev/tasks/new'
 
   if (task.status === 'failed') {
     return (
@@ -106,6 +116,40 @@ export function DevTaskDetailPage() {
             style={{ textDecoration: 'none' }}
           >
             再上一批
+          </Link>
+          <Link
+            to="/dev/tasks"
+            className="btn btn-secondary"
+            style={{ textDecoration: 'none', marginLeft: 8 }}
+          >
+            返回开发历史
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (isSocialPublishReport(report)) {
+    return (
+      <div>
+        <header style={{ marginBottom: 24 }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+            社媒发布 · {report.title || task.id}（Dev）
+          </h2>
+          <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginTop: 6 }}>
+            完成时间：
+            {task.completed_at ? new Date(task.completed_at).toLocaleString('zh-CN') : '—'}
+          </p>
+        </header>
+        <SocialPublishReportView report={report} />
+        <DevLoopPanel task={task} />
+        <div style={{ marginTop: 32 }}>
+          <Link
+            to="/dev/tasks/social"
+            className="btn btn-secondary"
+            style={{ textDecoration: 'none' }}
+          >
+            再发一条
           </Link>
           <Link
             to="/dev/tasks"

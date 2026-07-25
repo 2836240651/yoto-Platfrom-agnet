@@ -12,6 +12,7 @@ from app.schemas.tasks import (
     MetricItem,
     ReportCategories,
     ReportSummary,
+    SocialPublishReport,
     TaskProgress,
     TemuListingReport,
 )
@@ -54,12 +55,31 @@ def _data_source(raw: dict[str, Any] | None) -> DataSourceMeta | None:
     )
 
 
-def state_to_task_report(state: dict[str, Any]) -> DouyinTaskReport | TemuListingReport | None:
+def state_to_task_report(
+    state: dict[str, Any],
+) -> DouyinTaskReport | TemuListingReport | SocialPublishReport | None:
     report = state.get("report")
     if not report:
         return None
 
     kind = report.get("kind") or "douyin_keyword"
+    if kind == "social_publish":
+        status = report.get("status") or "unknown"
+        if status not in ("pending", "running", "success", "failed", "unknown"):
+            status = "unknown"
+        return SocialPublishReport(
+            kind="social_publish",
+            ok=bool(report.get("ok")),
+            status=status,  # type: ignore[arg-type]
+            message=str(report.get("message") or ""),
+            job_id=report.get("job_id"),
+            platform_type=report.get("platform_type"),
+            publish_runtime=report.get("publish_runtime"),
+            title=report.get("title"),
+            account_list=list(report.get("account_list") or []),
+            data_source=_data_source(report.get("data_source")),
+        )
+
     if kind == "temu_listing":
         status = report.get("status") or "unknown"
         if status not in ("processing", "success", "failed", "cancelled", "unknown"):

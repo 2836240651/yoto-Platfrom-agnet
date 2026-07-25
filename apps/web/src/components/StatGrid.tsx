@@ -2,10 +2,10 @@ import type { DouyinTaskReport } from '../types/task'
 
 export function StatGrid({ summary }: { summary: DouyinTaskReport['summary'] }) {
   const items = [
-    { num: summary.keyword_count, lbl: '候选项总数' },
-    { num: summary.video_sample_count, lbl: '内容样本' },
-    { num: summary.product_sku_count, lbl: '机会样本' },
-    { num: summary.p0_count, lbl: '高优先级' },
+    { num: summary.keyword_count, lbl: '词卡总数' },
+    { num: summary.video_sample_count, lbl: '视频词' },
+    { num: summary.product_sku_count, lbl: '商品词' },
+    { num: summary.p0_count, lbl: 'P0 优先' },
   ]
 
   return (

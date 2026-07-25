@@ -59,6 +59,10 @@ class Settings(BaseSettings):
     commander_access_token: str = ""
     commander_default_agent_id: str = "肉机"
     commander_default_platform: str = "temu"
+    # Douyin meat worker probe (platform_mcp /worker/status). Same token as Worker.
+    douyin_worker_url: str = "https://www.yoto.work/platform-mcp"
+    douyin_worker_token: str = ""
+    douyin_worker_id: str = "肉机"
 
     @model_validator(mode="after")
     def _derive_fallback(self) -> Settings:

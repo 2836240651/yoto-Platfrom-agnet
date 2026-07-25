@@ -2,14 +2,28 @@
   "version": 1,
   "aliases": {
     "douyin_collect_hot_keywords": {
+      "mcp_tool": "douyin_collect_hot_keywords",
+      "server": "platform_mcp",
+      "requires_mcp": true,
+      "description": "服务器 platform_mcp 入队；肉机 Worker 本机 Playwright 采集（禁止 stub）",
+      "allow_in_skills": ["douyin-keyword-research"]
+    },
+    "douyin_chanmama_auth_status": {
+      "mcp_tool": "douyin_chanmama_auth_status",
+      "server": "platform_mcp",
+      "requires_mcp": true,
+      "description": "肉机在线 / 蝉妈妈登录态摘要（无 Cookie）",
+      "allow_in_skills": []
+    },
+    "douyin_analyze_keywords": {
       "mcp_tool": null,
-      "description": "intentional stub；蝉妈妈/原子采集待接",
+      "description": "LLM 分析 tool：对采集结果做热搜/潜力分层并优化运营建议（非 MCP）",
       "allow_in_skills": ["douyin-keyword-research"]
     },
     "douyin_expand_suggest_words": {
       "mcp_tool": null,
-      "description": "intentional stub",
-      "allow_in_skills": ["douyin-keyword-research"]
+      "description": "deprecated；分析改走 douyin_analyze_keywords / action analyze",
+      "allow_in_skills": []
     },
     "ping": {
       "mcp_tool": "ping",
@@ -30,6 +44,27 @@
       "requires_mcp": true,
       "allow_in_skills": ["temu-product-listing"],
       "description": "Commander task_list 轮询上架状态"
+    },
+    "social_list_accounts": {
+      "mcp_tool": "social_list_accounts",
+      "server": "platform_mcp",
+      "requires_mcp": true,
+      "allow_in_skills": ["social-media-publish"],
+      "description": "automedia 账号列表 + login-agent 状态"
+    },
+    "social_publish_submit": {
+      "mcp_tool": "social_publish_submit",
+      "server": "platform_mcp",
+      "requires_mcp": true,
+      "allow_in_skills": ["social-media-publish"],
+      "description": "automedia 上传+发布提交（黑盒）"
+    },
+    "social_publish_status": {
+      "mcp_tool": "social_publish_status",
+      "server": "platform_mcp",
+      "requires_mcp": true,
+      "allow_in_skills": ["social-media-publish"],
+      "description": "automedia publish job 轮询"
     }
   }
 }

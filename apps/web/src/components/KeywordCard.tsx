@@ -13,18 +13,63 @@ const trendStyle = {
   down: { bg: '#fee2e2', color: 'var(--down)' },
 }
 
-export function KeywordCard({ card }: { card: KeywordCardType }) {
+function isMutedHeat(value: string): boolean {
+  return value === '暂无指数' || value === '—' || value === '-'
+}
+
+export function KeywordCard({
+  card,
+  side,
+}: {
+  card: KeywordCardType
+  side?: 'video' | 'product'
+}) {
   const p = priorityStyle[card.priority]
   const t = trendStyle[card.trend]
+  const sideLabel = side === 'product' ? '商品' : side === 'video' ? '视频' : null
+  const sideColor = side === 'product' ? '#b45309' : '#0369a1'
+  const sideBg = side === 'product' ? '#fff7ed' : '#e0f2fe'
 
   return (
     <div className="card" style={{ marginBottom: 16 }}>
       <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 12 }}>
         <h3 style={{ fontSize: '1.2rem', flex: 1, minWidth: 160 }}>{card.keyword}</h3>
-        <span style={{ fontSize: '0.75rem', fontWeight: 600, padding: '4px 10px', borderRadius: 6, background: p.bg, color: p.color }}>
+        {sideLabel ? (
+          <span
+            style={{
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              padding: '4px 10px',
+              borderRadius: 6,
+              background: sideBg,
+              color: sideColor,
+            }}
+          >
+            {sideLabel}
+          </span>
+        ) : null}
+        <span
+          style={{
+            fontSize: '0.75rem',
+            fontWeight: 600,
+            padding: '4px 10px',
+            borderRadius: 6,
+            background: p.bg,
+            color: p.color,
+          }}
+        >
           {card.priority}
         </span>
-        <span style={{ fontSize: '0.85rem', fontWeight: 600, padding: '3px 8px', borderRadius: 6, background: t.bg, color: t.color }}>
+        <span
+          style={{
+            fontSize: '0.85rem',
+            fontWeight: 600,
+            padding: '3px 8px',
+            borderRadius: 6,
+            background: t.bg,
+            color: t.color,
+          }}
+        >
           {trendLabel[card.trend]}
         </span>
       </div>
@@ -36,6 +81,8 @@ export function KeywordCard({ card }: { card: KeywordCardType }) {
           padding: '10px 14px',
           marginBottom: 14,
           fontSize: '0.92rem',
+          lineHeight: 1.55,
+          whiteSpace: 'pre-wrap',
         }}
       >
         {card.reason}
@@ -44,17 +91,31 @@ export function KeywordCard({ card }: { card: KeywordCardType }) {
       <div
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(96px, 1fr))',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(110px, 1fr))',
           gap: 10,
           marginBottom: 14,
         }}
       >
-        {card.metrics.map((m) => (
-          <div key={m.label} style={{ textAlign: 'center', padding: '10px 6px', background: '#f8fafc', borderRadius: 8 }}>
-            <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>{m.value}</div>
-            <div style={{ fontSize: '0.68rem', color: 'var(--muted)' }}>{m.label}</div>
-          </div>
-        ))}
+        {card.metrics.map((m) => {
+          const muted = isMutedHeat(m.value)
+          return (
+            <div
+              key={m.label}
+              style={{ textAlign: 'center', padding: '10px 6px', background: '#f8fafc', borderRadius: 8 }}
+            >
+              <div
+                style={{
+                  fontSize: muted ? '0.95rem' : '1.15rem',
+                  fontWeight: muted ? 600 : 700,
+                  color: muted ? 'var(--muted)' : 'var(--text)',
+                }}
+              >
+                {m.value}
+              </div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--muted)', marginTop: 2 }}>{m.label}</div>
+            </div>
+          )
+        })}
       </div>
 
       <ul style={{ fontSize: '0.88rem', color: 'var(--muted)', margin: '12px 0', paddingLeft: 18 }}>
@@ -63,7 +124,7 @@ export function KeywordCard({ card }: { card: KeywordCardType }) {
         ))}
       </ul>
 
-      <div style={{ background: '#f0fdfa', borderRadius: 8, padding: '12px 14px', fontSize: '0.9rem' }}>
+      <div style={{ background: '#f0fdfa', borderRadius: 8, padding: '12px 14px', fontSize: '0.9rem', lineHeight: 1.5 }}>
         <strong style={{ color: '#0f766e' }}>行动建议：</strong> {card.action}
       </div>
     </div>

@@ -5,7 +5,13 @@ import { ReportTabs } from '../components/ReportTabs'
 import { StatGrid } from '../components/StatGrid'
 import { TaskProgressBar } from '../components/TaskProgress'
 import { TemuListingReportView } from '../components/TemuListingReportView'
-import { isDouyinReport, isTemuListingReport, type TaskDetail } from '../types/task'
+import { SocialPublishReportView } from '../components/SocialPublishReportView'
+import {
+  isDouyinReport,
+  isSocialPublishReport,
+  isTemuListingReport,
+  type TaskDetail,
+} from '../types/task'
 
 export function TaskDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -48,7 +54,11 @@ export function TaskDetailPage() {
   }
 
   const retryTo =
-    task.skill === 'temu-product-listing' ? '/tasks/temu' : '/tasks/new'
+    task.skill === 'temu-product-listing'
+      ? '/tasks/temu'
+      : task.skill === 'social-media-publish'
+        ? '/tasks/social'
+        : '/tasks/new'
 
   if (task.status === 'failed') {
     return (
@@ -87,6 +97,31 @@ export function TaskDetailPage() {
         <div style={{ marginTop: 32 }}>
           <Link to="/tasks/temu" className="btn btn-secondary" style={{ textDecoration: 'none' }}>
             再上一批
+          </Link>
+          <Link to="/" className="btn btn-secondary" style={{ textDecoration: 'none', marginLeft: 8 }}>
+            返回首页
+          </Link>
+        </div>
+      </div>
+    )
+  }
+
+  if (isSocialPublishReport(report)) {
+    return (
+      <div>
+        <header style={{ marginBottom: 24 }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 700 }}>
+            社媒发布 · {report.title || task.id}
+          </h2>
+          <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginTop: 6 }}>
+            完成时间：
+            {task.completed_at ? new Date(task.completed_at).toLocaleString('zh-CN') : '—'}
+          </p>
+        </header>
+        <SocialPublishReportView report={report} />
+        <div style={{ marginTop: 32 }}>
+          <Link to="/tasks/social" className="btn btn-secondary" style={{ textDecoration: 'none' }}>
+            再发一条
           </Link>
           <Link to="/" className="btn btn-secondary" style={{ textDecoration: 'none', marginLeft: 8 }}>
             返回首页

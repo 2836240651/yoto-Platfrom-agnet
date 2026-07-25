@@ -1,15 +1,47 @@
 // Deploy platform-mcp gateway to the production host (not the developer laptop).
-// Usage (PowerShell):
-//   $env:P = '<ssh password>'
-//   $env:COMMANDER_ACCESS_TOKEN = '<optional bearer>'   // ping works without it
-//   node scripts/deploy-platform-mcp.js
+// Prefer repo .env (gitignore). Required keys:
+//   DEPLOY_PASS              SSH password (alias: $env:P)
+//   DOUYIN_WORKER_TOKEN      shared with meat worker
+//   COMMANDER_ACCESS_TOKEN   optional but recommended (Temu)
+// Optional: DEPLOY_HOST, DEPLOY_USER, SOCIAL_UPLOAD_TOKEN
+//
+//   python scripts/_fill_douyin_worker_env.py   // generate worker token + defaults
+//   scripts\deploy-platform-mcp.bat
+//   scripts\start-douyin-meat-worker.bat
 //
 // After deploy, clients use:
 //   https://www.yoto.work/platform-mcp/mcp
+// Docs: docs/wip/douyin-meat-machine-mcp.md
 
 const fs = require("fs");
 const path = require("path");
 const { Client } = require("ssh2");
+
+const ROOT = path.resolve(__dirname, "..");
+
+/** Load KEY=VAL from repo .env into process.env if not already set. */
+function loadDotEnv(filePath) {
+  if (!fs.existsSync(filePath)) return;
+  const text = fs.readFileSync(filePath, "utf8");
+  for (const line of text.split(/\r?\n/)) {
+    const s = line.trim();
+    if (!s || s.startsWith("#") || !s.includes("=")) continue;
+    const i = s.indexOf("=");
+    const key = s.slice(0, i).trim();
+    let val = s.slice(i + 1).trim();
+    if (
+      (val.startsWith('"') && val.endsWith('"')) ||
+      (val.startsWith("'") && val.endsWith("'"))
+    ) {
+      val = val.slice(1, -1);
+    }
+    if (process.env[key] === undefined || process.env[key] === "") {
+      process.env[key] = val;
+    }
+  }
+}
+
+loadDotEnv(path.join(ROOT, ".env"));
 
 const HOST = process.env.DEPLOY_HOST || "124.223.27.98";
 const USER = process.env.DEPLOY_USER || "root";
@@ -18,10 +50,11 @@ const REMOTE_DIR = "/data/platform-mcp";
 const NGINX_PROXY =
   "/opt/1panel/www/sites/www.yoto.work/proxy/platform-mcp.conf";
 
-const ROOT = path.resolve(__dirname, "..");
 const FILES = [
   ["mcp/servers/platform_mcp_gateway.py", "platform_mcp_gateway.py"],
   ["mcp/servers/commander_temu_client.py", "commander_temu_client.py"],
+  ["mcp/servers/social_automedia_client.py", "social_automedia_client.py"],
+  ["mcp/servers/douyin_job_queue.py", "douyin_job_queue.py"],
   ["mcp/deploy/Dockerfile", "Dockerfile"],
   ["mcp/deploy/platform-mcp.nginx.conf", "platform-mcp.nginx.conf"],
 ];
@@ -61,10 +94,24 @@ function writeRemote(conn, remote, body) {
 
 async function main() {
   if (!PASS) {
-    console.error("Set P or DEPLOY_PASS for SSH");
+    console.error(
+      "Set DEPLOY_PASS (or $env:P) in repo .env — SSH password for " +
+        `${USER}@${HOST}`
+    );
     process.exit(1);
   }
   const token = (process.env.COMMANDER_ACCESS_TOKEN || "").trim();
+  const douyinWorkerToken = (
+    process.env.DOUYIN_WORKER_TOKEN ||
+    process.env.DOUYIN_WORKER_TOKEN_SET ||
+    ""
+  ).trim();
+  if (!douyinWorkerToken) {
+    console.error(
+      "Set DOUYIN_WORKER_TOKEN in repo .env (shared with meat worker)"
+    );
+    process.exit(1);
+  }
   const conn = new Client();
   await new Promise((resolve, reject) => {
     conn
@@ -80,7 +127,10 @@ async function main() {
   });
 
   console.log("mkdir", REMOTE_DIR);
-  await exec(conn, `mkdir -p ${REMOTE_DIR}/uploads ${REMOTE_DIR}/build`);
+  await exec(
+    conn,
+    `mkdir -p ${REMOTE_DIR}/uploads ${REMOTE_DIR}/build ${REMOTE_DIR}/douyin-jobs`
+  );
 
   for (const [rel, name] of FILES) {
     const local = path.join(ROOT, rel);
@@ -92,6 +142,7 @@ async function main() {
     await upload(conn, local, remote);
   }
 
+  const socialToken = (process.env.SOCIAL_UPLOAD_TOKEN || "").trim();
   const compose = `services:
   platform-mcp:
     build:
@@ -106,16 +157,23 @@ async function main() {
       FASTMCP_HOST: "0.0.0.0"
       FASTMCP_PORT: "18765"
       FASTMCP_TRANSPORT: streamable-http
+      DOUYIN_JOB_DIR: /data/douyin-jobs
     ports:
       - "127.0.0.1:18765:18765"
     volumes:
       - ${REMOTE_DIR}/uploads:/data/uploads:ro
+      - ${REMOTE_DIR}/douyin-jobs:/data/douyin-jobs
 `;
   const envBody = [
     "COMMANDER_API_BASE=https://www.yoto.work/api/v1",
     `COMMANDER_ACCESS_TOKEN=${token}`,
     "COMMANDER_DEFAULT_AGENT_ID=肉机",
     "COMMANDER_DEFAULT_PLATFORM=temu",
+    `DOUYIN_WORKER_TOKEN=${douyinWorkerToken}`,
+    "DOUYIN_JOB_DIR=/data/douyin-jobs",
+    "DOUYIN_JOB_TIMEOUT_S=360",
+    "SOCIAL_UPLOAD_API_BASE=https://automedia.yoto.work",
+    `SOCIAL_UPLOAD_TOKEN=${socialToken}`,
     "",
   ].join("\n");
 
@@ -130,9 +188,16 @@ async function main() {
   );
 
   console.log("docker compose up...");
+  // Replace the existing named container platform-mcp (same gateway; do not spawn a second MCP).
   const build = await exec(
     conn,
-    `cd ${REMOTE_DIR}/build && docker compose down --remove-orphans 2>/dev/null; docker compose build && docker compose up -d`
+    [
+      `cd ${REMOTE_DIR}/build`,
+      "docker compose down --remove-orphans 2>/dev/null || true",
+      "docker rm -f platform-mcp 2>/dev/null || true",
+      "docker compose build",
+      "docker compose up -d",
+    ].join(" && ")
   );
   console.log(build.out);
   if (build.code !== 0) {

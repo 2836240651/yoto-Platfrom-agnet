@@ -13,6 +13,8 @@ def _seed_window(state: AgentState) -> dict[str, Any]:
     return {
         "seed": state.get("seed") or "渔具",
         "date_range_days": state.get("date_range_days", 30),
+        "include_video": bool(state.get("include_video", True)),
+        "include_product": bool(state.get("include_product", True)),
     }
 
 
@@ -49,12 +51,36 @@ def _temu_status(state: AgentState) -> dict[str, Any]:
     }
 
 
+def _social_submit(state: AgentState) -> dict[str, Any]:
+    import json
+
+    accounts = state.get("account_list") or []
+    tags = state.get("tags") or []
+    return {
+        "file_path": state.get("media_path") or "",
+        "account_list_json": json.dumps(list(accounts), ensure_ascii=False),
+        "platform_type": int(state.get("platform_type") or 3),
+        "title": state.get("title") or "",
+        "tags_json": json.dumps(list(tags), ensure_ascii=False),
+        "agent_id": state.get("agent_id") or "",
+        "file_list_json": "[]",
+    }
+
+
+def _social_status(state: AgentState) -> dict[str, Any]:
+    collected = state.get("collected_data") or {}
+    submit = collected.get("submit") or {}
+    return {"job_id": str(submit.get("job_id") or "")}
+
+
 ARG_BUILDERS: dict[str, ArgBuilder] = {
     "douyin_collect_hot_keywords": _seed_window,
     "douyin_expand_suggest_words": _seed_depth,
     "ping": _ping,
     "temu_product_issue_submit": _temu_submit,
     "temu_product_issue_status": _temu_status,
+    "social_publish_submit": _social_submit,
+    "social_publish_status": _social_status,
 }
 
 

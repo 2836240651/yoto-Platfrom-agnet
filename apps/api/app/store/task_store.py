@@ -25,6 +25,11 @@ class TaskRecord:
     excel_path: str | None = None
     agent_id: str | None = None
     platform: str | None = None
+    media_path: str | None = None
+    platform_type: int | None = None
+    account_list: list[str] | None = None
+    title: str | None = None
+    tags: list[str] | None = None
     model_id: str | None = None
     status: str = "pending"
     created_at: datetime = field(default_factory=_utcnow)
@@ -35,9 +40,11 @@ class TaskRecord:
     debug: dict[str, Any] | None = None
 
     @property
-    def title(self) -> str:
+    def title_display(self) -> str:
         if self.skill == "temu-product-listing":
             return f"Temu {self.shop_id or '上架'}"
+        if self.skill == "social-media-publish":
+            return self.title or f"社媒 type={self.platform_type or '?'}"
         return self.seed or "未命名"
 
 
@@ -69,7 +76,7 @@ class TaskStore:
                 id=r.id,
                 seed=r.seed,
                 skill=r.skill,
-                title=r.title,
+                title=r.title_display,
                 status=r.status,  # type: ignore[arg-type]
                 created_at=r.created_at,
                 completed_at=r.completed_at,
@@ -91,6 +98,11 @@ class TaskStore:
             excel_path=record.excel_path,
             agent_id=record.agent_id,
             platform=record.platform,
+            media_path=record.media_path,
+            platform_type=record.platform_type,
+            account_list=record.account_list,
+            title=record.title,
+            tags=record.tags,
             model_id=record.model_id,
             created_at=record.created_at,
             completed_at=record.completed_at,

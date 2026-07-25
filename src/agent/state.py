@@ -37,6 +37,11 @@ class AgentState(TypedDict, total=False):
     shop_id: str
     agent_id: str
     platform: str
+    media_path: str
+    platform_type: int
+    account_list: list[str]
+    title: str
+    tags: list[str]
     # Explicit session pin; null/absent → catalog light|heavy. Black-box skills ignore.
     model_id: str | None
 

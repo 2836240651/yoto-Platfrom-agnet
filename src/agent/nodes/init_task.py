@@ -16,6 +16,8 @@ SKILL_INIT: dict[str, dict] = {
         "message_fn": lambda state: (
             f"分析抖音种子词【{state.get('seed') or '渔具'}】的热搜词与潜力词"
         ),
+        "run_timeout_s": 600,
+        "quality_threshold": 0.7,
     },
     "temu-product-listing": {
         "message_fn": lambda state: (
@@ -24,6 +26,16 @@ SKILL_INIT: dict[str, dict] = {
         "run_timeout_s": 900,
         "quality_threshold": 0.5,
         "progress_label": "提交上架",
+    },
+    "social-media-publish": {
+        "message_fn": lambda state: (
+            f"社媒发布：type={state.get('platform_type') or '?'} "
+            f"标题={state.get('title') or '?'} "
+            f"文件={state.get('media_path') or '?'}"
+        ),
+        "run_timeout_s": 900,
+        "quality_threshold": 0.5,
+        "progress_label": "提交发布",
     },
 }
 
@@ -58,6 +70,11 @@ def init_task(state: AgentState) -> dict:
         "shop_id": state.get("shop_id") or "",
         "agent_id": state.get("agent_id") or "",
         "platform": state.get("platform") or "temu",
+        "media_path": state.get("media_path") or "",
+        "platform_type": int(state.get("platform_type") or 0) or 3,
+        "account_list": list(state.get("account_list") or []),
+        "title": state.get("title") or "",
+        "tags": list(state.get("tags") or []),
         "model_id": state.get("model_id"),
         "status": "planning",
         "current_step": 0,

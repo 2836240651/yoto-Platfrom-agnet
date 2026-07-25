@@ -1,0 +1,33 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["media_path", "platform_type", "account_list", "title"],
+  "properties": {
+    "media_path": {
+      "type": "string",
+      "description": "网关可读的本地视频/素材路径，将上传至 automedia"
+    },
+    "platform_type": {
+      "type": "integer",
+      "enum": [1, 2, 3, 4, 5],
+      "description": "1小红书 2视频号 3抖音 4快手 5TikTok"
+    },
+    "account_list": {
+      "type": "array",
+      "items": { "type": "string" },
+      "minItems": 1,
+      "description": "automedia 账号 cookie 文件名列表"
+    },
+    "title": { "type": "string", "minLength": 1 },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" },
+      "default": []
+    },
+    "agent_id": {
+      "type": "string",
+      "description": "可选：指定 login-agent"
+    }
+  },
+  "additionalProperties": false
+}

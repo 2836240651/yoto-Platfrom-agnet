@@ -99,6 +99,11 @@ async def run_task_async(
     agent_id: str | None = None,
     platform: str | None = None,
     model_id: str | None = None,
+    media_path: str | None = None,
+    platform_type: int | None = None,
+    account_list: list[str] | None = None,
+    title: str | None = None,
+    tags: list[str] | None = None,
 ) -> None:
     graph = get_graph()
     config = _thread_config(task_id)
@@ -114,6 +119,11 @@ async def run_task_async(
         "agent_id": agent_id or "",
         "platform": platform or "temu",
         "model_id": model_id,
+        "media_path": media_path or "",
+        "platform_type": int(platform_type or 0) or 3,
+        "account_list": list(account_list or []),
+        "title": title or "",
+        "tags": list(tags or []),
         "skip_transient_sim": os.getenv("SIMULATE_TRANSIENT") != "1",
     }
 
@@ -152,6 +162,11 @@ def create_task_record(
     agent_id: str | None = None,
     platform: str | None = None,
     model_id: str | None = None,
+    media_path: str | None = None,
+    platform_type: int | None = None,
+    account_list: list[str] | None = None,
+    title: str | None = None,
+    tags: list[str] | None = None,
 ) -> TaskRecord:
     task_id = f"task_{uuid.uuid4().hex[:12]}"
     record = TaskRecord(
@@ -166,6 +181,11 @@ def create_task_record(
         agent_id=agent_id,
         platform=platform,
         model_id=model_id,
+        media_path=media_path,
+        platform_type=platform_type,
+        account_list=account_list,
+        title=title,
+        tags=tags,
         status="pending",
     )
     task_store.create(record)

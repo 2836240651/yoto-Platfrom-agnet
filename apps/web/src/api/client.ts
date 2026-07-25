@@ -43,6 +43,28 @@ export const api = {
     }
     return res.json() as Promise<TaskDetail>
   },
+  createSocialPublish: async (params: {
+    platformType: number
+    title: string
+    accountList: string
+    file: File
+    tags?: string
+    agentId?: string
+  }) => {
+    const fd = new FormData()
+    fd.append('platform_type', String(params.platformType))
+    fd.append('title', params.title)
+    fd.append('account_list', params.accountList)
+    fd.append('file', params.file)
+    if (params.tags) fd.append('tags', params.tags)
+    if (params.agentId) fd.append('agent_id', params.agentId)
+    const res = await fetch(`${BASE}/tasks/social-publish`, { method: 'POST', body: fd })
+    if (!res.ok) {
+      const text = await res.text()
+      throw new Error(text || `请求失败: ${res.status}`)
+    }
+    return res.json() as Promise<TaskDetail>
+  },
   listTasks: (limit = 20) =>
     request<{ items: TaskListItem[]; total: number }>(`/tasks?limit=${limit}`),
   getTask: (id: string) => request<TaskDetail>(`/tasks/${id}`),

@@ -58,7 +58,20 @@ export interface TemuListingReport {
   data_source?: DataSourceMeta | null
 }
 
-export type TaskReport = DouyinTaskReport | TemuListingReport
+export interface SocialPublishReport {
+  kind: 'social_publish'
+  ok: boolean
+  status: 'pending' | 'running' | 'success' | 'failed' | 'unknown'
+  message: string
+  job_id?: string | null
+  platform_type?: number | null
+  publish_runtime?: string | null
+  title?: string | null
+  account_list?: string[]
+  data_source?: DataSourceMeta | null
+}
+
+export type TaskReport = DouyinTaskReport | TemuListingReport | SocialPublishReport
 
 export interface TaskProgress {
   step: number
@@ -154,6 +167,10 @@ export function isDouyinReport(report: TaskReport): report is DouyinTaskReport {
 
 export function isTemuListingReport(report: TaskReport): report is TemuListingReport {
   return report.kind === 'temu_listing'
+}
+
+export function isSocialPublishReport(report: TaskReport): report is SocialPublishReport {
+  return report.kind === 'social_publish'
 }
 
 export function sourceBadgeLabel(source?: string | null): string {

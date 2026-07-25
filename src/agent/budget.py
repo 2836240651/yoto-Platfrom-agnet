@@ -10,8 +10,10 @@ from agent.state import AgentState
 # Per-macro-step micro budget caps (name -> max).
 # Black-box Job steps (submit/finalize): max 1 — wait/retry inside the handler, not the graph.
 STEP_MICRO_BUDGET_MAX: dict[str, int] = {
-    "collect": 12,
-    "expand": 12,
+    # Chanmama collect is a black-box MCP job (wait/retry inside tool).
+    "collect": 1,
+    "analyze": 2,
+    "expand": 3,
     "score": 4,
     "report": 3,
     "submit": 1,
@@ -19,8 +21,9 @@ STEP_MICRO_BUDGET_MAX: dict[str, int] = {
 }
 
 STEP_MICRO_BUDGET_DEFAULT: dict[str, int] = {
-    "collect": 3,
-    "expand": 3,
+    "collect": 1,
+    "analyze": 1,
+    "expand": 2,
     "score": 2,
     "report": 2,
     "submit": 1,
@@ -37,7 +40,7 @@ class BudgetDefaults:
     replan_budget_default: int = 1
     replan_budget_max: int = 3
     global_loop_budget: int = 40
-    run_timeout_s: int = 180
+    run_timeout_s: int = 600
     run_token_budget: int = 50_000
     quality_threshold: float = 0.75
     min_gain_delta: float = 0.05

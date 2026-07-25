@@ -177,17 +177,21 @@ Commander **已是完整闭环**。链路内模型调用归 **Commander Server�
 
 ## 5. 场景五：多社交媒体批量发布
 
+> **设计定稿**：`docs/wip/spec-social-mcp-blackbox-design.md`（2026-07-24）  
+> Gap：`docs/wip/p2-social-mcp-contract-gap-check.md`
+
 | 步骤 | 边界 |
 |------|------|
-| 文案/标题/配文创作（可选前置） | **LLM** |
-| 账号登录、上传、发布、状态回传 | **Tool**（已有自动化后端） |
+| 文案/标题/配文创作（可选前置） | **LLM**（light / 会话 `model_id`） |
+| 账号列表、上传、发布、状态回传 | **Tool**（MCP → automedia → 肉机 login-agent） |
 
 | 项 | 约定 |
 |----|------|
-| 外部系统 | `social-auto-upload`（多平台 Playwright/API） |
-| 建议 MCP | `social_publish_video` / `social_list_accounts` |
+| 外部系统 | `social-auto-upload` / `automedia.yoto.work`；浏览器在 **Temu 肉机同机** login-agent |
+| 建议 MCP | `social_list_accounts`（可选）· `social_publish_submit` · `social_publish_status` |
 | 环境变量键名 | `SOCIAL_UPLOAD_API_BASE` |
-| Skill | 编排确认平台与账号；**不**把 Playwright 搬进 LangGraph 节点 |
+| Skill | `social-media-publish`；黑盒 1～2 步；**不**把 Playwright 搬进本仓 |
+| 平台首批 | type 1–5（小红书/视频号/抖音/快手/TikTok）；TikTok 助手离线必须失败 |
 
 ### 本机对照（仅供人读）
 
@@ -211,7 +215,7 @@ Commander **已是完整闭环**。链路内模型调用归 **Commander Server�
 
 1. P0：Skill Schema + 抖音真实采集 MCP  
 2. P1：Runtime 动态加载 + Temu Commander **整段** MCP（本仓不做分析/生图）  
-3. P2：OSS / 社媒等（延后）
+3. P2：OSS / 社媒等（契约顺序仍此后置；**社媒已用户批准提前**，见 handoff `2026-07-24-social-mcp-design.md`）
 
 ---
 

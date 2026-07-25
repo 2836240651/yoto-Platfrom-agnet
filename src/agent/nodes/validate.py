@@ -35,6 +35,14 @@ def _temu_valid(report: dict) -> bool:
     return status in ("processing", "success", "failed", "cancelled", "unknown")
 
 
+def _social_valid(report: dict) -> bool:
+    for key in ("ok", "status", "message"):
+        if key not in report:
+            return False
+    status = report.get("status")
+    return status in ("pending", "running", "success", "failed", "unknown")
+
+
 def _report_valid(report: dict | None) -> bool:
     if not report or not isinstance(report, dict):
         return False
@@ -43,6 +51,8 @@ def _report_valid(report: dict | None) -> bool:
         return _douyin_valid(report)
     if kind == "temu_listing":
         return _temu_valid(report)
+    if kind == "social_publish":
+        return _social_valid(report)
     return False
 
 

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["kind", "ok", "status", "message"],
+  "properties": {
+    "kind": { "const": "social_publish" },
+    "ok": { "type": "boolean" },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "running", "success", "failed", "unknown"]
+    },
+    "message": { "type": "string" },
+    "job_id": { "type": ["string", "null"] },
+    "platform_type": { "type": ["integer", "null"] },
+    "publish_runtime": { "type": ["string", "null"] },
+    "title": { "type": ["string", "null"] },
+    "account_list": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "data_source": { "type": "object" }
+  },
+  "additionalProperties": true
+}

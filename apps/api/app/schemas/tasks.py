@@ -9,7 +9,11 @@ from pydantic import BaseModel, Field, model_validator
 
 
 class TaskCreateRequest(BaseModel):
-    skill: Literal["douyin-keyword-research", "temu-product-listing"] = "douyin-keyword-research"
+    skill: Literal[
+        "douyin-keyword-research",
+        "temu-product-listing",
+        "social-media-publish",
+    ] = "douyin-keyword-research"
     seed: str | None = Field(default=None, max_length=20)
     include_video: bool = True
     include_product: bool = True
@@ -18,6 +22,11 @@ class TaskCreateRequest(BaseModel):
     excel_path: str | None = None
     agent_id: str | None = None
     platform: str = "temu"
+    media_path: str | None = None
+    platform_type: int | None = None
+    account_list: list[str] | None = None
+    title: str | None = None
+    tags: list[str] | None = None
     # Explicit session pin; omit/null = catalog. Black-box skills strip before run.
     model_id: str | None = None
 
@@ -46,6 +55,21 @@ class TaskCreateRequest(BaseModel):
             self.shop_id = self.shop_id.strip()
             self.excel_path = self.excel_path.strip()
             self.platform = (self.platform or "temu").strip() or "temu"
+        if self.skill == "social-media-publish":
+            if not self.media_path or not self.media_path.strip():
+                raise ValueError("social-media-publish 需要 media_path（先上传素材）")
+            if self.platform_type not in (1, 2, 3, 4, 5):
+                raise ValueError("social-media-publish 需要 platform_type ∈ 1–5")
+            if not self.account_list:
+                raise ValueError("social-media-publish 需要 account_list")
+            if not self.title or not self.title.strip():
+                raise ValueError("social-media-publish 需要 title")
+            self.media_path = self.media_path.strip()
+            self.title = self.title.strip()
+            self.account_list = [str(a).strip() for a in self.account_list if str(a).strip()]
+            if not self.account_list:
+                raise ValueError("social-media-publish 需要非空 account_list")
+            self.tags = [str(t).strip() for t in (self.tags or []) if str(t).strip()]
         return self
 
 
@@ -120,7 +144,20 @@ class TemuListingReport(BaseModel):
     data_source: DataSourceMeta | None = None
 
 
-TaskReport = DouyinTaskReport | TemuListingReport
+class SocialPublishReport(BaseModel):
+    kind: Literal["social_publish"] = "social_publish"
+    ok: bool
+    status: Literal["pending", "running", "success", "failed", "unknown"]
+    message: str
+    job_id: str | None = None
+    platform_type: int | None = None
+    publish_runtime: str | None = None
+    title: str | None = None
+    account_list: list[str] = Field(default_factory=list)
+    data_source: DataSourceMeta | None = None
+
+
+TaskReport = DouyinTaskReport | TemuListingReport | SocialPublishReport
 
 
 class TaskListItem(BaseModel):
@@ -145,12 +182,17 @@ class TaskDetail(BaseModel):
     excel_path: str | None = None
     agent_id: str | None = None
     platform: str | None = None
+    media_path: str | None = None
+    platform_type: int | None = None
+    account_list: list[str] | None = None
+    title: str | None = None
+    tags: list[str] | None = None
     model_id: str | None = None
     created_at: datetime
     completed_at: datetime | None = None
     progress: TaskProgress | None = None
     error_message: str | None = None
-    report: DouyinTaskReport | TemuListingReport | None = None
+    report: DouyinTaskReport | TemuListingReport | SocialPublishReport | None = None
     debug: dict[str, Any] | None = None
 
 

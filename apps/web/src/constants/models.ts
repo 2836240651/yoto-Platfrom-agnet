@@ -6,7 +6,7 @@ export type ModelId =
   | 'gpt-5.6-sol'
   | 'gpt-5.6-terra'
 
-export const BLACKBOX_SKILLS = new Set(['temu-product-listing'])
+export const BLACKBOX_SKILLS = new Set(['temu-product-listing', 'social-media-publish'])
 
 export const MODEL_OPTIONS: { id: ModelId; label: string }[] = [
   { id: 'agnes-2.0-flash', label: 'Agnes' },

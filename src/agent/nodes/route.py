@@ -10,6 +10,7 @@ from agent.state import AgentState
 # Keyword routing until we add LLM-based intent classification.
 SKILL_KEYWORDS: dict[str, list[str]] = {
     "temu-product-listing": ["temu", "店小秘", "上架", "批量上货", "肉机"],
+    "social-media-publish": ["社媒", "小红书", "视频号", "快手", "tiktok", "发布视频"],
     "douyin-keyword-research": ["抖音", "热搜", "潜力词", "渔具", "关键词"],
     "cross-border-listing": ["shopify", "amazon", "tiktok shop", "跨境"],
     "store-analytics": ["店铺", "运营", "gmv", "转化", "周报"],

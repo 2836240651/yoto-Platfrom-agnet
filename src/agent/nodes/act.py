@@ -148,6 +148,7 @@ def _run_registered_tool(
     requires_mcp = bool(resolved.requires_mcp)
 
     if requires_mcp and not settings.mcp_runtime_enabled:
+        # requires_mcp: never stub_fallback (even if MCP_ALLOW_STUB_FALLBACK=true).
         payload = {
             "ok": False,
             "error": f"MCP_RUNTIME_ENABLED=false，无法运行 {logical}",
@@ -169,7 +170,8 @@ def _run_registered_tool(
         return payload, tool_registry.quality_for(resolved, payload), False
 
     if not settings.mcp_runtime_enabled:
-        if settings.allow_stub_fallback and stub is not None:
+        # Non-requires_mcp MCP tools may stub_fallback when explicitly allowed.
+        if settings.allow_stub_fallback and stub is not None and not requires_mcp:
             payload = stub()
             payload.setdefault("_meta", {})
             payload["_meta"].update(

@@ -129,6 +129,77 @@ def _probe_meat_machine() -> ToolProbe:
         )
 
 
+def _douyin_worker_base() -> str:
+    return (settings.douyin_worker_url or "https://www.yoto.work/platform-mcp").rstrip("/")
+
+
+def _douyin_worker_token() -> str:
+    return (settings.douyin_worker_token or "").strip()
+
+
+def _probe_douyin_meat_worker() -> ToolProbe:
+    """Douyin Playwright hand via platform_mcp /worker/status (not Commander WS)."""
+    token = _douyin_worker_token()
+    base = _douyin_worker_base()
+    if not token:
+        return ToolProbe(
+            id="douyin_meat_worker",
+            label="抖音肉机（蝉妈妈）",
+            ok=False,
+            online=False,
+            detail="服务端未配置 DOUYIN_WORKER_TOKEN",
+        )
+    try:
+        with httpx.Client(timeout=20.0) as client:
+            resp = client.get(
+                f"{base}/worker/status",
+                headers={
+                    "Authorization": f"Bearer {token}",
+                    "Accept": "application/json",
+                },
+            )
+            resp.raise_for_status()
+            payload = resp.json()
+        if not isinstance(payload, dict):
+            return ToolProbe(
+                id="douyin_meat_worker",
+                label="抖音肉机（蝉妈妈）",
+                ok=False,
+                online=False,
+                detail="状态响应非 JSON 对象",
+            )
+        online = bool(payload.get("ok"))
+        logged_in = bool(payload.get("logged_in"))
+        nick = str(payload.get("nickname") or "").strip()
+        err = str(payload.get("error") or payload.get("message") or "").strip()
+        if online and logged_in:
+            detail = f"在线已登录{f' · {nick}' if nick else ''}"
+        elif online and not logged_in:
+            detail = err or "在线但未登录蝉妈妈（need_login）"
+            online = False
+        else:
+            detail = err or "离线（need_worker）"
+        return ToolProbe(
+            id="douyin_meat_worker",
+            label="抖音肉机（蝉妈妈）",
+            ok=online and logged_in,
+            online=online and logged_in,
+            detail=detail,
+        )
+    except Exception as exc:  # noqa: BLE001
+        return ToolProbe(
+            id="douyin_meat_worker",
+            label="抖音肉机（蝉妈妈）",
+            ok=False,
+            online=False,
+            detail=f"探测失败：{exc}",
+        )
+
+
 def get_tools_status() -> ToolsStatusResponse:
-    probes = [_probe_mcp(), _probe_meat_machine()]
-    return ToolsStatusResponse(ok=all(p.ok for p in probes), probes=probes)
+    probes = [_probe_mcp(), _probe_meat_machine(), _probe_douyin_meat_worker()]
+    # Douyin ops gate: MCP + 蝉妈妈手. Temu Agent is shown but advisory (separate token/WS).
+    required_ok = all(
+        p.ok for p in probes if p.id in ("mcp_runtime", "douyin_meat_worker")
+    )
+    return ToolsStatusResponse(ok=required_ok, probes=probes)

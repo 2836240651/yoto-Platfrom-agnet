@@ -25,7 +25,15 @@ async def test_agent_douyin_keyword_flow() -> None:
     assert result.get("report") is not None
     assert result["report"].get("kind") == "douyin_keyword"
     assert result["report"]["summary"]["keyword_count"] > 0
-    assert any("stub" in (a.get("text") or "").lower() or "原子 MCP" in (a.get("text") or "") for a in result["report"]["alerts"])
+    alerts = result["report"].get("alerts") or []
+    assert any(
+        any(k in (a.get("text") or "") for k in ("stub", "原子 MCP", "蝉妈妈", "模拟"))
+        for a in alerts
+    ) or (result["report"].get("data_source") or {}).get("source") in (
+        "stub",
+        "stub_fallback",
+        "mcp",
+    )
     assert "final_answer" in result
 
 
@@ -38,5 +46,6 @@ async def test_micro_budget_fields_initialized() -> None:
             "skip_transient_sim": True,
         },
     )
-    assert result.get("micro_budget_max", 0) >= 3
+    # collect micro max is 1 (black-box MCP); later steps keep higher caps in budget table
+    assert result.get("micro_budget_max", 0) >= 1
     assert result.get("global_loop_used", 0) > 0

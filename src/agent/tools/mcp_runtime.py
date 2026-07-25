@@ -255,18 +255,43 @@ def _normalize_server_paths(servers: dict[str, Any]) -> dict[str, Any]:
 
 def _normalize_mcp_output(out: Any) -> dict[str, Any]:
     if isinstance(out, dict):
+        # langchain-mcp may wrap FastMCP errors as {"result":[Content...]}
+        if set(out.keys()) == {"result"}:
+            nested = _normalize_mcp_output(out["result"])
+            if nested.get("ok") is False or "error" in nested:
+                return nested
+            if "ok" in nested or "keywords" in nested or "count" in nested:
+                return nested
         return out
     if isinstance(out, list):
         for item in out:
+            text = None
             if isinstance(item, dict) and item.get("type") == "text" and isinstance(item.get("text"), str):
                 text = item["text"].strip()
-                if text.startswith("{") or text.startswith("["):
-                    try:
-                        parsed = json.loads(text)
-                        if isinstance(parsed, dict):
-                            return parsed
-                        return {"result": parsed}
-                    except json.JSONDecodeError:
-                        continue
+            elif hasattr(item, "text") and isinstance(getattr(item, "text"), str):
+                text = str(getattr(item, "text")).strip()
+            if not text:
+                continue
+            if text.startswith("{") or text.startswith("["):
+                try:
+                    parsed = json.loads(text)
+                    if isinstance(parsed, dict):
+                        return parsed
+                    return {"result": parsed}
+                except json.JSONDecodeError:
+                    continue
+            if text.lower().startswith("error") or "Playwright" in text:
+                return {"ok": False, "error": text}
         return {"result": out}
+    if isinstance(out, str):
+        text = out.strip()
+        if text.startswith("{"):
+            try:
+                parsed = json.loads(text)
+                if isinstance(parsed, dict):
+                    return parsed
+            except json.JSONDecodeError:
+                pass
+        if text.lower().startswith("error"):
+            return {"ok": False, "error": text}
     return {"result": out}

@@ -7,7 +7,8 @@
 | Server | 职责 | 状态 |
 |--------|------|------|
 | `example_server.py` | 示例 / 健康检查 | stub |
-| `douyin_data.py` | 抖音数据采集 | TODO |
+| `douyin_data_server.py` | 抖音/蝉妈妈采集 | Playwright + 个人版登录态 |
+| `douyin_chanmama_client.py` | 蝉妈妈客户端 | collect / auth |
 | `ecommerce_ops.py` | 跨境平台上架/店铺分析 | TODO |
 
 ## 注册

@@ -1,0 +1,55 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["kind", "summary", "categories"],
+  "properties": {
+    "kind": { "const": "douyin_keyword" },
+    "summary": {
+      "type": "object",
+      "required": ["keyword_count", "p0_count"],
+      "properties": {
+        "keyword_count": { "type": "integer" },
+        "video_sample_count": { "type": "integer" },
+        "product_sku_count": { "type": "integer" },
+        "p0_count": { "type": "integer" }
+      },
+      "additionalProperties": true
+    },
+    "tags": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "alerts": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "text"],
+        "properties": {
+          "type": { "enum": ["info", "warn"] },
+          "text": { "type": "string" }
+        }
+      }
+    },
+    "categories": {
+      "type": "object",
+      "required": ["video_hot", "video_potential", "product_hot", "product_potential"],
+      "properties": {
+        "video_hot": { "type": "array" },
+        "video_potential": { "type": "array" },
+        "product_hot": { "type": "array" },
+        "product_potential": { "type": "array" }
+      },
+      "additionalProperties": true
+    },
+    "data_source": {
+      "type": "object",
+      "properties": {
+        "source": { "type": "string" },
+        "tool": { "type": ["string", "null"] },
+        "provider": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

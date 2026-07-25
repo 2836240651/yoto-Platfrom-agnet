@@ -2,28 +2,16 @@
 
 from __future__ import annotations
 
-from agent.state import AgentState, StepPlan
-
-# Hard-coded plans per skill (production: load from SKILL.md frontmatter).
-SKILL_PLANS: dict[str, list[StepPlan]] = {
-    "douyin-keyword-research": [
-        {"id": "1", "name": "collect", "tool": "douyin_collect_hot_keywords", "status": "pending"},
-        {"id": "2", "name": "expand", "tool": "douyin_expand_suggest_words", "status": "pending"},
-        {"id": "3", "name": "score", "tool": None, "status": "pending"},
-        {"id": "4", "name": "report", "tool": None, "status": "pending"},
-    ],
-    "general": [
-        {"id": "1", "name": "answer", "tool": None, "status": "pending"},
-    ],
-}
+from agent.constants import SKILL_PLANS as CANONICAL_PLANS
+from agent.state import AgentState
 
 
 def plan_steps(state: AgentState) -> dict:
     """Build a deterministic step list for the selected skill."""
     skill = state.get("skill") or "general"
-    plan = SKILL_PLANS.get(skill, SKILL_PLANS["general"])
+    plan = CANONICAL_PLANS.get(skill) or CANONICAL_PLANS.get("douyin-keyword-research") or []
     return {
-        "plan": plan,
+        "plan": [dict(s) for s in plan],
         "current_step": 0,
         "loop_count": 0,
         "max_loops": state.get("max_loops", 15),

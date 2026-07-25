@@ -48,6 +48,7 @@ export function Layout() {
 
         <SidebarItem to={homePath} icon="✎" label="新对话" end />
         <SidebarItem to={`${taskBase}/temu`} icon="▣" label="Temu 上架" />
+        <SidebarItem to={`${taskBase}/social`} icon="◈" label="社媒发布" />
         <SidebarItem to={isDev ? '/dev/tools' : '/tools'} icon="◎" label="工具状态" />
         <SidebarItem to={taskBase} icon="◷" label="任务" />
         {isDev && <SidebarItem to="/dev/mcp" icon="⚙" label="MCP 管理" />}

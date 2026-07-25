@@ -5,18 +5,21 @@ from __future__ import annotations
 MACRO_STEP_LABELS: dict[str, str] = {
     "collect": "采集数据",
     "expand": "扩展联想词",
+    "analyze": "LLM 分析",
     "score": "打分分类",
     "report": "生成报告",
     "submit": "提交上架",
     "finalize": "确认结果",
+    "publish": "提交发布",
 }
 
-MACRO_STEP_ORDER = ["collect", "expand", "score", "report"]
+MACRO_STEP_ORDER = ["collect", "analyze", "report"]
 
 # Pure MCP black-box skills: no platform chat model; ignore session model_id.
 BLACKBOX_SKILLS: frozenset[str] = frozenset(
     {
         "temu-product-listing",
+        "social-media-publish",
     }
 )
 
@@ -44,21 +47,14 @@ SKILL_PLANS: dict[str, list[dict]] = {
         },
         {
             "id": "2",
-            "name": "expand",
-            "label": "扩展联想词",
-            "tool": "douyin_expand_suggest_words",
+            "name": "analyze",
+            "label": "LLM 分析优化",
+            "tool": None,
+            "action": "analyze",
             "status": "pending",
         },
         {
             "id": "3",
-            "name": "score",
-            "label": "打分分类",
-            "tool": None,
-            "action": "score",
-            "status": "pending",
-        },
-        {
-            "id": "4",
             "name": "report",
             "label": "生成报告",
             "tool": None,
@@ -80,6 +76,23 @@ SKILL_PLANS: dict[str, list[dict]] = {
             "label": "确认结果",
             "tool": None,
             "action": "finalize_temu_listing",
+            "status": "pending",
+        },
+    ],
+    "social-media-publish": [
+        {
+            "id": "1",
+            "name": "submit",
+            "label": "提交发布",
+            "tool": "social_publish_submit",
+            "status": "pending",
+        },
+        {
+            "id": "2",
+            "name": "finalize",
+            "label": "确认结果",
+            "tool": None,
+            "action": "finalize_social_publish",
             "status": "pending",
         },
     ],

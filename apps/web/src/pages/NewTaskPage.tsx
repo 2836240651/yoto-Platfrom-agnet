@@ -10,7 +10,7 @@ export function NewTaskPage() {
   const navState = (location.state as ComposerNavigateState | null) ?? {}
   const initialTopic = navState.topic ?? ''
   const pinnedModelId = (navState.model_id ?? null) as ModelId | null
-  const [seed, setSeed] = useState(initialTopic || '新品上市策略')
+  const [seed, setSeed] = useState(initialTopic || '渔具')
   const [includeVideo, setIncludeVideo] = useState(true)
   const [includeProduct, setIncludeProduct] = useState(true)
   const [dateRange, setDateRange] = useState<7 | 30 | 90>(30)
@@ -54,10 +54,13 @@ export function NewTaskPage() {
             type="text"
             value={seed}
             onChange={(e) => setSeed(e.target.value)}
-            placeholder="如：渔具、路亚竿"
+            placeholder="如：渔具、欧鲤钓、反底钓、路亚"
             maxLength={20}
             required
           />
+          <p style={{ margin: '6px 0 0', fontSize: '0.82rem', color: 'var(--muted)' }}>
+            支持细分玩法词；若蝉妈妈未收录，会自动桥接父词再分析热搜/潜力词。
+          </p>
         </div>
 
         <div className="form-group">

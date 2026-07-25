@@ -25,6 +25,8 @@ const NGINX_API = "/opt/1panel/www/sites/www.yoto.work/proxy/agent-platform.conf
 const MCP_FILES = [
   ["mcp/servers/platform_mcp_gateway.py", `${REMOTE_MCP}/build/platform_mcp_gateway.py`],
   ["mcp/servers/commander_temu_client.py", `${REMOTE_MCP}/build/commander_temu_client.py`],
+  ["mcp/servers/social_automedia_client.py", `${REMOTE_MCP}/build/social_automedia_client.py`],
+  ["mcp/servers/douyin_job_queue.py", `${REMOTE_MCP}/build/douyin_job_queue.py`],
   ["mcp/deploy/Dockerfile", `${REMOTE_MCP}/build/Dockerfile`],
   ["mcp/deploy/platform-mcp.nginx.conf", `${REMOTE_MCP}/build/platform-mcp.nginx.conf`],
   ["mcp/deploy/agent-platform.nginx.conf", `${REMOTE_MCP}/build/agent-platform.nginx.conf`],
@@ -152,6 +154,7 @@ async function main() {
   const lightModel =
     (process.env.LLM_LIGHT_MODEL || "").trim() || "agnes-2.0-flash";
 
+  const douyinWorkerToken = (process.env.DOUYIN_WORKER_TOKEN || "").trim();
   const envBody = [
     "COMMANDER_API_BASE=https://www.yoto.work/api/v1",
     `COMMANDER_ACCESS_TOKEN=${token}`,
@@ -162,6 +165,10 @@ async function main() {
     "MCP_RUNTIME_ENABLED=true",
     "MCP_ALLOW_STUB_FALLBACK=false",
     "MCP_CONFIG_PATH=/app/config/mcp.docker.json",
+    "DOUYIN_WORKER_URL=https://www.yoto.work/platform-mcp",
+    douyinWorkerToken
+      ? `DOUYIN_WORKER_TOKEN=${douyinWorkerToken}`
+      : "DOUYIN_WORKER_TOKEN=",
     openai ? `OPENAI_API_KEY=${openai}` : "OPENAI_API_KEY=",
     `OPENAI_API_BASE=${openaiBase}`,
     `LLM_MODEL=${llmModel}`,
