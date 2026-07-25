@@ -2,6 +2,11 @@ name: Build macOS Desktop
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - feat/tools-status-probe
+    paths:
+      - .github/workflows/build-macos-desktop.yml
 
 permissions:
   contents: read

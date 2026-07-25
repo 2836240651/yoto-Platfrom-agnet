@@ -6,7 +6,7 @@
 
 ## 范围与约束
 
-- 工作流仅通过 `workflow_dispatch` 手动执行，避免每次 push 消耗 macOS runner 分钟。
+- 工作流支持 `workflow_dispatch` 手动执行；在 `feat/tools-status-probe` 上仅当该工作流文件本身变更时自动触发一次，解决工作流尚未合入默认分支时无法 API dispatch 的限制。
 - 构建未签名包；不读取、保存或要求 Apple 签名/公证密钥。
 - 复用 `apps/workspace-desktop` 的 `build:web` 脚本和 Electron Builder，不修改业务前端或 API。
 - 产物为 universal（Apple Silicon 与 Intel）`.dmg` 和 `.zip`，不产生 macOS `.exe`。
