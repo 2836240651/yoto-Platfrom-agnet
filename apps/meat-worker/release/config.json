@@ -4,7 +4,7 @@
   "worker_id": "肉机",
   "poll_s": 3,
   "headed": false,
-  "chrome_user_data_dir": "",
+  "chrome_user_data_dir": "D:\\reverselab\\agent-platform\\.local\\chanmama-chrome",
   "use_system_chrome": true,
   "claim_enabled": true
 }

@@ -26,8 +26,13 @@ def main() -> int:
         env.get("DOUYIN_WORKER_URL") or data.get("worker_url") or "https://www.yoto.work/platform-mcp"
     ).rstrip("/")
     data["worker_id"] = env.get("DOUYIN_WORKER_ID") or data.get("worker_id") or "闲置机-1"
+    # Prefer existing Chanmama profile under repo .local (same as scripts/chanmama_login.py).
+    profile = (env.get("DOUYIN_CHROME_USER_DATA_DIR") or "").strip()
+    if not profile:
+        profile = str(ROOT / ".local" / "chanmama-chrome")
+    data["chrome_user_data_dir"] = profile
     CFG_PATH.write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print("wrote", CFG_PATH, "token_set=", bool(token))
+    print("wrote", CFG_PATH, "token_set=", bool(token), "profile=", profile)
     return 0
 
 
