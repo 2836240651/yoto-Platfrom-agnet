@@ -1,7 +1,7 @@
 {
   "worker_url": "https://www.yoto.work/platform-mcp",
-  "worker_token": "",
-  "worker_id": "闲置机-1",
+  "worker_token": "7opYDGCkL7mBLjHr8ROXTVGD7s5a9paN8vMtiD7lP60",
+  "worker_id": "肉机",
   "poll_s": 3,
   "headed": false,
   "chrome_user_data_dir": "",

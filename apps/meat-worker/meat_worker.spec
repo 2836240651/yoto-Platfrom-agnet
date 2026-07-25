@@ -1,15 +1,21 @@
 # -*- mode: python ; coding: utf-8 -*-
-# Slim onedir for apps/meat-worker/release/ — system Chrome preferred at runtime.
+# onedir → apps/meat-worker/release — bundles real playwright/driver (not patchright).
 
 from pathlib import Path
+
+import playwright
 
 ROOT = Path(SPECPATH).resolve().parents[1]
 MW = ROOT / "apps" / "meat-worker"
 CLIENT = ROOT / "mcp" / "servers" / "douyin_chanmama_client.py"
+PW_DRIVER = Path(playwright.__file__).resolve().parent / "driver"
 
 datas = [
     (str(CLIENT), "."),
     (str(MW / "config.example.json"), "."),
+    (str(MW / "playwright_bootstrap.py"), "."),
+    # Critical: playwright looks for driver/node.exe + package/cli.js
+    (str(PW_DRIVER), "playwright/driver"),
 ]
 
 hiddenimports = [
@@ -19,7 +25,9 @@ hiddenimports = [
     "PIL.ImageDraw",
     "playwright",
     "playwright.sync_api",
+    "playwright._impl._driver",
     "douyin_chanmama_client",
+    "playwright_bootstrap",
     "handlers",
     "handlers.douyin_collect",
     "config",

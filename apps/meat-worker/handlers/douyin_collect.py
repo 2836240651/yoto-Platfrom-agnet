@@ -35,6 +35,13 @@ def _ensure_chanmama_path() -> None:
 
 def _client():
     _ensure_chanmama_path()
+    if getattr(sys, "frozen", False):
+        try:
+            from playwright_bootstrap import prepare_playwright_driver
+
+            prepare_playwright_driver()
+        except Exception as exc:  # noqa: BLE001
+            raise RuntimeError(f"Playwright 驱动初始化失败: {exc}") from exc
     import douyin_chanmama_client as client  # noqa: WPS433
 
     return client

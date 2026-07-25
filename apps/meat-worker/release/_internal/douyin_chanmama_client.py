@@ -191,6 +191,14 @@ class ChanmamaSession:
     def __enter__(self) -> "ChanmamaSession":
         from playwright.sync_api import sync_playwright
 
+        # Frozen MeatWorker: fix driver path before starting Playwright.
+        try:
+            from playwright_bootstrap import prepare_playwright_driver
+
+            prepare_playwright_driver()
+        except ImportError:
+            pass
+
         self._pw = sync_playwright().start()
         launch_kwargs: dict[str, Any] = {
             "user_data_dir": str(profile_dir()),
