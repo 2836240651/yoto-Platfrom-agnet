@@ -30,44 +30,126 @@ def _session_with_api(api_get):
     session.check_login = lambda: {"logged_in": True}
     session.api_get = api_get
     return session
-def test_collect_no_data_returns_safe_relation_diagnostic():
-    calls: list[tuple[str, dict]] = []
-    def api_get(path: str, params: dict):
-        calls.append((path, params))
-        return {"errCode": 0, "data": {"aweme_keyword_relation_resp_list": []}}
-    result = _session_with_api(api_get).collect_hot_keywords("\u5927\u7269\u7aff", include_product=False)
+
+
+def _session_with_ui(ui_search):
+    session = _session_with_api(lambda _path, _params: {"errCode": 0, "data": {}})
+    session._ui_search = ui_search
+    return session
+
+
+def test_collect_no_data_returns_safe_video_search_diagnostic():
+    calls: list[tuple[str, str]] = []
+
+    def ui_search(*, chain: str, term: str):
+        calls.append((chain, term))
+        return {"route": "aweme_search", "request": {"keyword": term}, "http_status": 200, "payload": {"errCode": 0, "data": {"list": []}}}
+
+    result = _session_with_ui(ui_search).collect_hot_keywords("\u5927\u7269\u7aff", include_product=False)
     assert result["ok"] is False
     assert result["status"] == "no_data"
     assert result["diagnostics"][0]["queried_term"] == "\u5927\u7269\u7aff"
     assert result["diagnostics"][0]["err_code"] == 0
     assert result["diagnostics"][0]["raw_item_count"] == 0
     assert result["diagnostics"][0]["parsed_item_count"] == 0
-    assert calls == [("/v1/hot_search_analysis/relationWord", {"keyword": "\u5927\u7269\u7aff", "keyword_type": 1, "sort": "search_index", "orderBy": 1})]
+    assert result["diagnostics"][0]["route"] == "aweme_search"
+    assert calls == [("video", "\u5927\u7269\u7aff")]
 def test_collect_explicit_query_plan_keeps_query_lineage():
     seen_terms: list[str] = []
-    def api_get(path: str, params: dict):
-        if path == "/v1/hot_search_analysis/relationWord":
-            term = params["keyword"]
-            seen_terms.append(term)
-            return {"errCode": 0, "data": {"aweme_keyword_relation_resp_list": [{"keyword": f"{term}\u5173\u8054\u8bcd", "hot_value": 100}]}}
-        return {"errCode": 0, "data": {"aweme_keyword_relation_resp_list": []}}
-    result = _session_with_api(api_get).collect_hot_keywords("\u5927\u7269\u7aff", include_product=False, query_plan=[{"term": "\u5de8\u7269\u7aff", "source": "operator_expansion"}])
+
+    def ui_search(*, chain: str, term: str):
+        seen_terms.append(term)
+        return {"route": "aweme_search", "request": {"keyword": term}, "http_status": 200, "payload": {"errCode": 0, "data": {"list": [{"aweme_info": {"desc": f"{term}\u89c6\u9891", "digg_count": 100}}]}}}
+
+    result = _session_with_ui(ui_search).collect_hot_keywords("\u5927\u7269\u7aff", include_product=False, query_plan=[{"term": "\u5de8\u7269\u7aff", "source": "operator_expansion"}])
     assert seen_terms == ["\u5927\u7269\u7aff", "\u5de8\u7269\u7aff"]
     assert result["status"] == "ok"
     assert {(item["queried_term"], item["query_level"], item["query_source"]) for item in result["keywords"]} == {("\u5927\u7269\u7aff", "seed", "seed"), ("\u5de8\u7269\u7aff", "explicit_expansion", "operator_expansion")}
-def test_collect_known_empty_relation_code_is_no_data_with_diagnostic():
-    def api_get(_path: str, _params: dict):
-        return {"errCode": 55006, "errMsg": "\u65e0\u76f8\u5173\u5173\u8054\u8bcd\uff01", "data": {}}
-    result = _session_with_api(api_get).collect_hot_keywords("\u5927\u7269\u7aff", include_product=False)
+def test_collect_empty_product_search_is_no_data_with_diagnostic():
+    def ui_search(*, chain: str, term: str):
+        assert chain == "product"
+        return {"route": "spu_search", "request": {"keyword": term}, "http_status": 200, "payload": {"errCode": 0, "data": {"list": []}}}
+
+    result = _session_with_ui(ui_search).collect_hot_keywords("\u5927\u7269\u7aff", include_video=False)
     assert result["ok"] is False
     assert result["status"] == "no_data"
     assert result["diagnostics"][0]["queried_term"] == "\u5927\u7269\u7aff"
-    assert result["diagnostics"][0]["err_code"] == 55006
+    assert result["diagnostics"][0]["route"] == "spu_search"
+    assert result["diagnostics"][0]["err_code"] == 0
     assert result["diagnostics"][0]["raw_item_count"] == 0
     assert result["diagnostics"][0]["parsed_item_count"] == 0
-    assert result["diagnostics"][0]["error"] == "\u65e0\u76f8\u5173\u5173\u8054\u8bcd\uff01"
-def test_collect_unexpected_relation_error_is_upstream_error():
-    def api_get(_path: str, _params: dict):
-        return {"errCode": 50001, "errMsg": "service unavailable", "data": {}}
-    result = _session_with_api(api_get).collect_hot_keywords("\u5927\u7269\u7aff", include_product=False)
+    assert result["diagnostics"][0]["error"] is None
+def test_collect_unexpected_video_search_error_is_upstream_error():
+    def ui_search(*, chain: str, term: str):
+        assert chain == "video"
+        return {"route": "aweme_search", "request": {"keyword": term}, "http_status": 200, "payload": {"errCode": 50001, "errMsg": "service unavailable", "data": {}}}
+
+    result = _session_with_ui(ui_search).collect_hot_keywords("\u5927\u7269\u7aff", include_product=False)
     assert result["status"] == "upstream_error"
+
+
+def test_collect_uses_normal_member_product_and_video_ui_chains():
+    session = _session_with_api(lambda _path, _params: {"errCode": 0, "data": {}})
+    calls: list[tuple[str, str]] = []
+
+    def ui_search(*, chain: str, term: str):
+        calls.append((chain, term))
+        if chain == "product":
+            return {
+                "route": "spu_search",
+                "request": {"keyword": term, "page": "1", "sort": "duration_volume"},
+                "http_status": 200,
+                "payload": {
+                    "errCode": 52000,
+                    "data": {
+                        "list": [
+                            {
+                                "title": "\u5927\u7269\u7aff\u4e3b\u529b\u6b3e",
+                                "duration_volume": 1200,
+                                "duration_author_count": 8,
+                            }
+                        ]
+                    },
+                },
+            }
+        return {
+            "route": "aweme_search",
+            "request": {"keyword": term, "page": "1", "sort": "auto"},
+            "http_status": 200,
+            "payload": {
+                "errCode": 0,
+                "data": {
+                    "list": [
+                        {
+                            "aweme_info": {"aweme_title": "\u5927\u7269\u7aff\u5b9e\u6218", "digg_count": 88},
+                            "product_info": {"title": "\u5927\u7269\u7aff"},
+                        }
+                    ]
+                },
+            },
+        }
+
+    session._ui_search = ui_search
+
+    result = session.collect_hot_keywords("\u5927\u7269\u7aff")
+
+    assert calls == [("video", "\u5927\u7269\u7aff"), ("product", "\u5927\u7269\u7aff")]
+    assert result["status"] == "ok"
+    assert {item["source_route"] for item in result["keywords"]} == {"aweme_search", "spu_search"}
+    assert next(item for item in result["keywords"] if item["side"] == "video")["word"] == "\u5927\u7269\u7aff\u5b9e\u6218"
+    product_diagnostic = next(item for item in result["diagnostics"] if item["route"] == "spu_search")
+    assert product_diagnostic["err_code"] == 52000
+    assert product_diagnostic["raw_item_count"] == 1
+    assert product_diagnostic["parsed_item_count"] == 1
+    assert product_diagnostic["error"] is None
+
+
+def test_ui_response_match_requires_the_exact_keyword():
+    url = "https://api-service.chanmama.com/v5/home/aweme/search?page=1&keyword=%E5%A4%A7%E7%89%A9%E7%AB%BF&sort=auto"
+
+    assert client._matches_keyword_response(url, "/v5/home/aweme/search", "\u5927\u7269\u7aff")
+    assert not client._matches_keyword_response(
+        "https://api-service.chanmama.com/v5/home/aweme/search?page=1&keyword=&sort=digg_count",
+        "/v5/home/aweme/search",
+        "\u5927\u7269\u7aff",
+    )

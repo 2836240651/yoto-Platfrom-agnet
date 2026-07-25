@@ -2,7 +2,7 @@
   "mcpServers": {
     "platform_mcp": {
       "transport": "streamable_http",
-      "url": "http://platform-mcp:18765/mcp"
+      "url": "https://www.yoto.work/platform-mcp/mcp"
     }
   }
 }

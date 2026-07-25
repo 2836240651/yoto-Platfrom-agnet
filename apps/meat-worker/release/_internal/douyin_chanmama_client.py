@@ -13,12 +13,16 @@ import time
 from datetime import datetime, timedelta
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlencode
+from urllib.parse import parse_qsl, urlencode, urlparse
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_PROFILE = PROJECT_ROOT / ".local" / "chanmama-chrome"
 API_HOST = "https://api-service.chanmama.com"
 SITE = "https://www.chanmama.com"
+PRODUCT_SEARCH_PAGE = f"{SITE}/SPUrank/"
+VIDEO_SEARCH_PAGE = f"{SITE}/awemeRank/"
+PRODUCT_SEARCH_PATH = "/v1/spu/search"
+VIDEO_SEARCH_PATH = "/v5/home/aweme/search"
 
 # hotSearchRank works with 服装 leaf; 运动户外 top may return empty on personal edition.
 CATEGORY_CLOTHING = "1000003282"
@@ -160,6 +164,28 @@ def _split_hot_potential(rows: list[dict[str, Any]]) -> tuple[list[dict[str, Any
     return hot[:20], potential[:20]
 
 
+def _response_items(payload: dict[str, Any]) -> list[dict[str, Any]]:
+    data = payload.get("data")
+    if not isinstance(data, dict):
+        return []
+    rows = data.get("list")
+    return [item for item in rows if isinstance(item, dict)] if isinstance(rows, list) else []
+
+
+def _number(value: Any) -> int:
+    try:
+        return int(float(value))
+    except (TypeError, ValueError):
+        return 0
+
+
+def _matches_keyword_response(url: str, path: str, keyword: str) -> bool:
+    parsed = urlparse(url)
+    if parsed.path != path:
+        return False
+    return dict(parse_qsl(parsed.query, keep_blank_values=True)).get("keyword") == keyword
+
+
 class ChanmamaSession:
     def __init__(self, *, headed: bool = False) -> None:
         self.headed = headed
@@ -247,7 +273,7 @@ class ChanmamaSession:
             "login_hint": "python scripts/chanmama_login.py",
         }
 
-    def collect_hot_keywords(
+    def _collect_legacy_hot_keywords(
         self,
         seed: str,
         *,
@@ -477,6 +503,246 @@ class ChanmamaSession:
                 "provider": "chanmama",
             },
             "error": None if ok else ("采集为空：" + ("; ".join(errors[:3]) if errors else "无词")),
+        }
+    def _ui_search(self, *, chain: str, term: str) -> dict[str, Any]:
+        if chain == "product":
+            page_url = PRODUCT_SEARCH_PAGE
+            placeholder = "请输入商品名称、关键词"
+            response_path = PRODUCT_SEARCH_PATH
+        elif chain == "video":
+            page_url = VIDEO_SEARCH_PAGE
+            placeholder = "请输入视频标题或达人名称"
+            response_path = VIDEO_SEARCH_PATH
+        else:
+            raise ValueError(f"unsupported chain: {chain}")
+
+        self.page.goto(page_url, wait_until="domcontentloaded", timeout=60000)
+        self.page.wait_for_timeout(1200)
+        field = self.page.get_by_placeholder(placeholder, exact=True)
+        with self.page.expect_response(
+            lambda response: _matches_keyword_response(response.url, response_path, term),
+            timeout=30000,
+        ) as response_info:
+            field.fill(term)
+            field.press("Enter")
+        response = response_info.value
+        try:
+            payload = response.json()
+        except Exception:
+            payload = {"errCode": -1, "errMsg": "non-json response"}
+        if not isinstance(payload, dict):
+            payload = {"errCode": -1, "errMsg": "unexpected payload"}
+        request_params = {
+            key: value
+            for key, value in parse_qsl(urlparse(response.url).query, keep_blank_values=True)
+            if key in {"keyword", "page", "page_size", "pageSize", "sort", "orderBy"}
+        }
+        return {
+            "route": "spu_search" if chain == "product" else "aweme_search",
+            "request": request_params,
+            "http_status": response.status,
+            "payload": payload,
+        }
+
+    @staticmethod
+    def _product_rows(items: list[dict[str, Any]], *, term: str, level: str, source: str) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        for item in items:
+            title = str(item.get("title") or "").strip()
+            if not title:
+                continue
+            rows.append(
+                {
+                    "word": title,
+                    "hot_level": _number(item.get("duration_volume")),
+                    "compete_index": item.get("duration_author_count"),
+                    "side": "product",
+                    "bucket": "hot",
+                    "queried_term": term,
+                    "query_level": level,
+                    "query_source": source,
+                    "relation_to_seed": "exact_query_match",
+                    "source_route": "spu_search",
+                }
+            )
+        return rows
+
+    @staticmethod
+    def _video_rows(items: list[dict[str, Any]], *, term: str, level: str, source: str) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        for item in items:
+            aweme = item.get("aweme_info") if isinstance(item.get("aweme_info"), dict) else {}
+            product = item.get("product_info") if isinstance(item.get("product_info"), dict) else {}
+            title = str(
+                aweme.get("aweme_title")
+                or aweme.get("copy_writing_content")
+                or aweme.get("desc")
+                or aweme.get("title")
+                or product.get("title")
+                or ""
+            ).strip()
+            if not title:
+                continue
+            rows.append(
+                {
+                    "word": title,
+                    "hot_level": _number(aweme.get("digg_count") or aweme.get("like_count")),
+                    "compete_index": aweme.get("comment_count"),
+                    "side": "video",
+                    "bucket": "hot",
+                    "queried_term": term,
+                    "query_level": level,
+                    "query_source": source,
+                    "relation_to_seed": "exact_query_match",
+                    "source_route": "aweme_search",
+                }
+            )
+        return rows
+
+    def collect_hot_keywords(
+        self,
+        seed: str,
+        *,
+        date_range_days: int = 30,
+        include_video: bool = True,
+        include_product: bool = True,
+        query_plan: list[dict[str, str]] | None = None,
+    ) -> dict[str, Any]:
+        auth = self.check_login()
+        if not auth.get("logged_in"):
+            return {
+                "ok": False,
+                "need_login": True,
+                "error": auth.get("error") or "蝉妈妈未登录",
+                "login_hint": auth.get("login_hint"),
+                "profile": auth.get("profile"),
+                "seed": seed,
+            }
+
+        queries = [{"term": seed, "level": "seed", "source": "seed"}]
+        seen_terms = {seed}
+        for item in query_plan or []:
+            term = str(item.get("term") or "").strip() if isinstance(item, dict) else ""
+            if term and term not in seen_terms:
+                seen_terms.add(term)
+                queries.append(
+                    {
+                        "term": term,
+                        "level": "explicit_expansion",
+                        "source": str(item.get("source") or "operator_expansion"),
+                    }
+                )
+
+        diagnostics: list[dict[str, Any]] = []
+        attempts: list[dict[str, Any]] = []
+        traces: list[dict[str, Any]] = []
+        errors: list[str] = []
+        video_rows: list[dict[str, Any]] = []
+        product_rows: list[dict[str, Any]] = []
+
+        for chain, enabled, parser in (
+            ("video", include_video, self._video_rows),
+            ("product", include_product, self._product_rows),
+        ):
+            if not enabled:
+                continue
+            for query in queries:
+                term = query["term"]
+                try:
+                    result = self._ui_search(chain=chain, term=term)
+                except Exception as exc:  # noqa: BLE001
+                    diagnostics.append(
+                        {
+                            "route": f"{chain}_ui_search",
+                            "queried_term": term,
+                            "query_level": query["level"],
+                            "query_source": query["source"],
+                            "request": {"keyword": term},
+                            "http_status": None,
+                            "err_code": None,
+                            "raw_item_count": 0,
+                            "parsed_item_count": 0,
+                            "duration_ms": 0,
+                            "error": str(exc)[:200],
+                        }
+                    )
+                    attempts.append({"term": term, "level": query["level"], "route": f"{chain}_ui_search", "result_count": 0})
+                    errors.append(f"{chain}({term}): {str(exc)[:200]}")
+                    continue
+
+                payload = result.get("payload") if isinstance(result.get("payload"), dict) else {}
+                items = _response_items(payload)
+                parsed = parser(items, term=term, level=query["level"], source=query["source"])
+                if chain == "video":
+                    video_rows.extend(parsed)
+                else:
+                    product_rows.extend(parsed)
+                err_code = payload.get("errCode")
+                error = None if parsed or err_code in (0, "0", None) else str(payload.get("errMsg") or "upstream error")[:200]
+                diagnostics.append(
+                    {
+                        "route": result.get("route"),
+                        "queried_term": term,
+                        "query_level": query["level"],
+                        "query_source": query["source"],
+                        "request": result.get("request") or {"keyword": term},
+                        "http_status": result.get("http_status"),
+                        "err_code": err_code,
+                        "raw_item_count": len(items),
+                        "parsed_item_count": len(parsed),
+                        "duration_ms": 0,
+                        "error": error,
+                    }
+                )
+                attempts.append({"term": term, "level": query["level"], "route": result.get("route"), "result_count": len(parsed)})
+                traces.append({"tool": result.get("route"), "query": term, "errCode": err_code, "n": len(items)})
+                if error:
+                    errors.append(f"{result.get('route')}({term}): {error}")
+
+        video_rows = _dedupe(video_rows)
+        product_rows = _dedupe(product_rows)
+        video_hot, video_potential = _split_hot_potential(video_rows) if include_video else ([], [])
+        product_hot, product_potential = _split_hot_potential(product_rows) if include_product else ([], [])
+        all_rows = video_hot + video_potential + product_hot + product_potential
+        keywords = [
+            {
+                "word": item["word"],
+                "hot_level": item.get("hot_level") or 0,
+                "compete_index": item.get("compete_index"),
+                "side": item.get("side"),
+                "bucket": item.get("bucket"),
+                "queried_term": item.get("queried_term"),
+                "query_level": item.get("query_level"),
+                "query_source": item.get("query_source"),
+                "relation_to_seed": item.get("relation_to_seed"),
+                "source_route": item.get("source_route"),
+            }
+            for item in all_rows
+        ]
+        ok = bool(keywords)
+        has_upstream_error = any(item.get("error") and not item.get("raw_item_count") for item in diagnostics)
+        return {
+            "ok": ok,
+            "status": "ok" if ok else ("upstream_error" if has_upstream_error else "no_data"),
+            "diagnostics": diagnostics,
+            "seed": seed,
+            "seed_mode": "direct",
+            "bridges_used": [],
+            "attempts": attempts,
+            "coverage_state": "exact_hit" if ok else "coverage_gap",
+            "fallback_used": False,
+            "date_range_days": date_range_days,
+            "keywords": keywords,
+            "count": len(keywords),
+            "video_hot": [{"word": item["word"], "hot_level": item.get("hot_level") or 0} for item in video_hot],
+            "video_potential": [{"word": item["word"], "hot_level": item.get("hot_level") or 0} for item in video_potential],
+            "product_hot": [{"word": item["word"], "hot_level": item.get("hot_level") or 0} for item in product_hot],
+            "product_potential": [{"word": item["word"], "hot_level": item.get("hot_level") or 0} for item in product_potential],
+            "auth": {"logged_in": True, "nickname": auth.get("nickname")},
+            "traces": traces,
+            "errors": errors,
+            "data_source": {"source": "mcp", "tool": "douyin_collect_hot_keywords", "provider": "chanmama"},
+            "error": None if ok else ("采集为空：" + ("; ".join(errors[:3]) if errors else "无数据")),
         }
 
 

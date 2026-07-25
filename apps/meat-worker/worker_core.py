@@ -161,7 +161,7 @@ class MeatWorker:
             from handlers.douyin_collect import check_login_status
 
             try:
-                login = check_login_status(headed=self.cfg.headed if headed is None else headed)
+                login = check_login_status(headed=False if headed is None else headed)
             except Exception as exc:  # noqa: BLE001
                 login = {
                     "logged_in": False,

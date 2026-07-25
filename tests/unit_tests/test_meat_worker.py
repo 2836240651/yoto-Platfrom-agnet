@@ -43,3 +43,21 @@ def test_save_load_config_roundtrip(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     data = json.loads(path.read_text(encoding="utf-8"))
     assert data["worker_token"] == "abc"
     assert data["worker_id"] == "机-1"
+
+
+def test_idle_login_probe_stays_headless_when_task_browser_is_headed(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import handlers.douyin_collect as douyin_collect
+
+    seen: list[bool] = []
+    monkeypatch.setattr(
+        douyin_collect,
+        "check_login_status",
+        lambda *, headed: seen.append(headed) or {"logged_in": True},
+    )
+    worker = MeatWorker(MeatConfig(worker_token="t", headed=True))
+
+    worker.refresh_login()
+
+    assert seen == [False]
