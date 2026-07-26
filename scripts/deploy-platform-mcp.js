@@ -163,6 +163,13 @@ async function main() {
     volumes:
       - ${REMOTE_DIR}/uploads:/data/uploads:ro
       - ${REMOTE_DIR}/douyin-jobs:/data/douyin-jobs
+    networks:
+      - agent-platform
+
+networks:
+  agent-platform:
+    external: true
+    name: agent-platform-net
 `;
   const envBody = [
     "COMMANDER_API_BASE=https://www.yoto.work/api/v1",
