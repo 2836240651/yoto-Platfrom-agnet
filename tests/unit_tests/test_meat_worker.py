@@ -18,6 +18,36 @@ from worker_core import MeatWorker, default_handlers  # noqa: E402
 def test_default_handlers_include_douyin() -> None:
     h = default_handlers()
     assert "douyin_collect_hot_keywords" in h
+    assert "crossborder_sync" in h
+
+
+def test_crossborder_handler_rejects_unsupported_platform() -> None:
+    from handlers.crossborder_sync import handle_crossborder_sync
+
+    result = handle_crossborder_sync(
+        {"args": {"platform": "shopee", "account_ref": "store-1", "scope": "orders"}},
+        MeatConfig(worker_token="t"),
+    )
+
+    assert result == {
+        "ok": False,
+        "need_login": False,
+        "error": "unsupported platform: shopee",
+    }
+
+
+def test_claim_sends_supported_job_types(monkeypatch: pytest.MonkeyPatch) -> None:
+    worker = MeatWorker(MeatConfig(worker_token="t"), handlers=default_handlers())
+    calls: list[dict] = []
+
+    def fake_request(method: str, path: str, body: dict | None = None):  # type: ignore[no-untyped-def]
+        calls.append(body or {})
+        return {"ok": True, "job": None}
+
+    monkeypatch.setattr(worker, "_request", fake_request)
+    worker.claim()
+
+    assert calls == [{"worker_id": worker.cfg.worker_id, "job_types": ["crossborder_sync"]}]
 
 
 def test_unknown_job_type_completes_false(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
