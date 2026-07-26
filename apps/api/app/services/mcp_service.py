@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+from datetime import datetime, timezone
 from agent.config.settings import settings
 from agent.tools import mcp_config
 from agent.tools.mcp_runtime import mcp_runtime
@@ -79,6 +81,16 @@ def assert_write_allowed(token: str | None) -> str | None:
     """Return optional warning header value; raise PermissionError if denied."""
     configured = (settings.mcp_write_token or "").strip()
     if configured:
+        expiry = (os.environ.get("MCP_WRITE_TOKEN_EXPIRES_AT") or "").strip()
+        if expiry:
+            try:
+                expires_at = datetime.fromisoformat(expiry.replace("Z", "+00:00"))
+                if expires_at.tzinfo is None:
+                    expires_at = expires_at.replace(tzinfo=timezone.utc)
+            except ValueError as exc:
+                raise PermissionError("MCP write token expiry is invalid") from exc
+            if datetime.now(timezone.utc) >= expires_at.astimezone(timezone.utc):
+                raise PermissionError("MCP write token expired")
         if (token or "").strip() != configured:
             raise PermissionError("invalid or missing X-MCP-Write-Token")
         return None

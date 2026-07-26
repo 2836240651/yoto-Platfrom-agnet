@@ -3,7 +3,7 @@
   "worker_token": "",
   "worker_id": "闲置机-1",
   "poll_s": 3,
-  "headed": false,
+  "headed": true,
   "chrome_user_data_dir": "",
   "use_system_chrome": true,
   "claim_enabled": true

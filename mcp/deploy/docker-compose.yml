@@ -21,6 +21,7 @@ services:
       - /data/platform-mcp/uploads:/data/platform-mcp/uploads:ro
     networks:
       - platform
+      - reports
 
   agent-api:
     build:
@@ -45,7 +46,11 @@ services:
       - platform-mcp
     networks:
       - platform
+      - reports
 
 networks:
   platform:
     name: agent-platform-net
+  reports:
+    external: true
+    name: deploy_default

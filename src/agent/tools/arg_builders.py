@@ -15,6 +15,7 @@ def _seed_window(state: AgentState) -> dict[str, Any]:
         "date_range_days": state.get("date_range_days", 30),
         "include_video": bool(state.get("include_video", True)),
         "include_product": bool(state.get("include_product", True)),
+        "query_plan": state.get("query_plan") if isinstance(state.get("query_plan"), list) else [],
     }
 
 

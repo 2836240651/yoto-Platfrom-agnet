@@ -11,7 +11,7 @@ import pytest
 MW = Path(__file__).resolve().parents[2] / "apps" / "meat-worker"
 sys.path.insert(0, str(MW))
 
-from config import MeatConfig, save_config  # noqa: E402
+from config import MeatConfig, config_path, save_config  # noqa: E402
 from worker_core import MeatWorker, default_handlers  # noqa: E402
 
 
@@ -43,3 +43,11 @@ def test_save_load_config_roundtrip(tmp_path: Path, monkeypatch: pytest.MonkeyPa
     data = json.loads(path.read_text(encoding="utf-8"))
     assert data["worker_token"] == "abc"
     assert data["worker_id"] == "机-1"
+
+
+def test_config_path_handles_unset_worker_dir(monkeypatch: pytest.MonkeyPatch, tmp_path: Path) -> None:
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.delenv("MEAT_WORKER_DIR", raising=False)
+    monkeypatch.setenv("APPDATA", str(tmp_path / "appdata"))
+
+    assert config_path() == tmp_path / "appdata" / "agent-platform-meat" / "config.json"

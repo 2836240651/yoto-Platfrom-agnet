@@ -35,7 +35,10 @@ class TaskCreateRequest(BaseModel):
         from agent.constants import ALLOWED_MODEL_IDS, is_blackbox_skill, normalize_model_id
 
         mid = normalize_model_id(self.model_id)
-        if is_blackbox_skill(self.skill):
+        if self.skill == "douyin-keyword-research":
+            # Chanmama analysis always uses the service default model route.
+            self.model_id = None
+        elif is_blackbox_skill(self.skill):
             # Black-box: strip any model_id (invalid ids also ignored, no 400).
             self.model_id = None
         else:

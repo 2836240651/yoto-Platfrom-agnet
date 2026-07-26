@@ -45,6 +45,8 @@ const REL_FILES = [
   "src/agent/constants.py",
   "src/agent/llm.py",
   "src/agent/config/settings.py",
+  "src/agent/knowledge/__init__.py",
+  "src/agent/knowledge/fishing_gear.py",
   "src/agent/tools/douyin_analyze.py",
   "src/agent/tools/step_handlers.py",
   "src/agent/tools/stub_dispatch.py",
@@ -59,16 +61,23 @@ const REL_FILES = [
   "config/mcp.json",
   "config/mcp.docker.json",
   "apps/api/app/services/tools_status.py",
+  "apps/api/app/services/mcp_service.py",
   "apps/api/app/services/langgraph_runner.py",
   "apps/api/app/services/report_adapter.py",
   "apps/api/app/routers/tasks.py",
   "apps/api/app/routers/tools.py",
   "apps/api/app/main.py",
+  "apps/api/app/routers/boss.py",
+  "apps/api/app/schemas/boss.py",
+  "apps/api/app/services/douyin_reports.py",
   "apps/api/app/schemas/tasks.py",
+  "apps/api/app/schemas/mcp.py",
   "apps/api/app/store/task_store.py",
   "skills/douyin-keyword-research/SKILL.md",
   "skills/douyin-keyword-research/schema/input.json",
   "skills/douyin-keyword-research/schema/output.json",
+  "knowledge/collections/fishing-gear/catalog.json",
+  "knowledge/collections/fishing-gear/README.md",
 ];
 
 function exec(conn, cmd) {
@@ -147,7 +156,7 @@ async function main() {
   }
 
   if (douyinToken) {
-    console.log("merge DOUYIN_WORKER_* into compose .env...");
+    console.log("merge worker and Commander status settings into compose .env...");
     const pyBody = `
 from pathlib import Path
 import re
@@ -155,7 +164,9 @@ p = Path(${JSON.stringify(REMOTE_COMPOSE + "/.env")})
 text = p.read_text(encoding="utf-8") if p.exists() else ""
 vals = {
     "DOUYIN_WORKER_TOKEN": ${JSON.stringify(douyinToken)},
+    "DOUYIN_WORKER_TOKEN_EXPIRES_AT": ${JSON.stringify((process.env.DOUYIN_WORKER_TOKEN_EXPIRES_AT || "").trim())},
     "DOUYIN_WORKER_URL": "https://www.yoto.work/platform-mcp",
+    "COMMANDER_DEFAULT_AGENT_ID": ${JSON.stringify((process.env.COMMANDER_DEFAULT_AGENT_ID || "").trim())},
     "AGENT_ENV": "prod",
     "MCP_ALLOW_STUB_FALLBACK": "false",
 }
@@ -188,6 +199,19 @@ print("ok", p)
     console.error("container not running");
     conn.end();
     process.exit(1);
+  }
+
+  if (present.includes("apps/api/app/services/douyin_reports.py")) {
+    console.log("install PyMySQL for BOSS report hot-patch...");
+    const install = await exec(
+      conn,
+      `docker exec ${CONTAINER} python -m pip install --no-cache-dir "PyMySQL>=1.1.1,<2"`
+    );
+    console.log(install.out.trim());
+    if (install.code !== 0) {
+      conn.end();
+      process.exit(install.code || 1);
+    }
   }
 
   // One shell script remotely to avoid channel spam

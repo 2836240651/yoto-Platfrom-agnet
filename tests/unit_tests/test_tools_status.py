@@ -11,11 +11,9 @@ from app.services.tools_status import ToolsStatusResponse, get_tools_status
 @patch("app.services.tools_status.mcp_runtime")
 @patch("app.services.tools_status.httpx.Client")
 @patch("app.services.tools_status._douyin_worker_token", return_value="dy-token")
-@patch("app.services.tools_status._commander_token", return_value="test-token")
-@patch("app.services.tools_status._default_agent", return_value="肉机")
+@patch("app.services.tools_status._default_agent", return_value="agent-uuid")
 def test_tools_status_shape(
     _mock_agent: MagicMock,
-    _mock_token: MagicMock,
     _mock_dy_token: MagicMock,
     mock_client_cls: MagicMock,
     mock_mcp: MagicMock,
@@ -26,11 +24,11 @@ def test_tools_status_shape(
     mock_mcp.status.return_value = {"ok": True, "tool_count": 3, "error": ""}
     mock_mcp.available_tools.return_value = ["temu_listing_submit", "other"]
 
-    mock_post = MagicMock()
-    mock_post.raise_for_status = MagicMock()
-    mock_post.json.return_value = {
+    mock_status = MagicMock()
+    mock_status.raise_for_status = MagicMock()
+    mock_status.json.return_value = {
         "code": 0,
-        "data": [{"name": "肉机", "status": True}],
+        "data": {"id": "agent-uuid", "name": "肉机", "online": True},
     }
     mock_get = MagicMock()
     mock_get.raise_for_status = MagicMock()
@@ -42,8 +40,7 @@ def test_tools_status_shape(
     mock_client = MagicMock()
     mock_client.__enter__.return_value = mock_client
     mock_client.__exit__.return_value = None
-    mock_client.post.return_value = mock_post
-    mock_client.get.return_value = mock_get
+    mock_client.get.side_effect = [mock_status, mock_get]
     mock_client_cls.return_value = mock_client
 
     data = get_tools_status()
@@ -59,19 +56,16 @@ def test_tools_status_shape(
     assert meat.online is True
     dy = next(p for p in data.probes if p.id == "douyin_meat_worker")
     assert dy.online is True
-    mock_client.post.assert_called_once()
-    mock_client.get.assert_called_once()
+    assert mock_client.get.call_count == 2
 
 
 @patch("app.services.tools_status.settings")
 @patch("app.services.tools_status.mcp_runtime")
 @patch("app.services.tools_status.httpx.Client")
 @patch("app.services.tools_status._douyin_worker_token", return_value="dy-token")
-@patch("app.services.tools_status._commander_token", return_value="bad-token")
-@patch("app.services.tools_status._default_agent", return_value="肉机")
-def test_tools_status_ok_when_commander_down_douyin_up(
+@patch("app.services.tools_status._default_agent", return_value="agent-uuid")
+def test_tools_status_ok_when_temu_agent_offline_douyin_up(
     _mock_agent: MagicMock,
-    _mock_token: MagicMock,
     _mock_dy_token: MagicMock,
     mock_client_cls: MagicMock,
     mock_mcp: MagicMock,
@@ -83,16 +77,16 @@ def test_tools_status_ok_when_commander_down_douyin_up(
     mock_mcp.status.return_value = {"ok": True, "tool_count": 3, "error": ""}
     mock_mcp.available_tools.return_value = ["temu_listing_submit"]
 
-    mock_post = MagicMock()
-    mock_post.raise_for_status.side_effect = Exception("401")
+    mock_status = MagicMock()
+    mock_status.raise_for_status = MagicMock()
+    mock_status.json.return_value = {"code": 0, "data": {"id": "agent-uuid", "online": False}}
     mock_get = MagicMock()
     mock_get.raise_for_status = MagicMock()
     mock_get.json.return_value = {"ok": True, "logged_in": True, "nickname": "x"}
     mock_client = MagicMock()
     mock_client.__enter__.return_value = mock_client
     mock_client.__exit__.return_value = None
-    mock_client.post.return_value = mock_post
-    mock_client.get.return_value = mock_get
+    mock_client.get.side_effect = [mock_status, mock_get]
     mock_client_cls.return_value = mock_client
 
     data = get_tools_status()

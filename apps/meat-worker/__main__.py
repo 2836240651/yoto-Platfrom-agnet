@@ -8,7 +8,7 @@ import sys
 from pathlib import Path
 
 # Bump when shipping a fixed release — appears in meat-worker.log for “which EXE”.
-MEAT_WORKER_BUILD = "2026-07-25c-pw-tray"
+MEAT_WORKER_BUILD = "2026-07-25d-headed-task"
 
 # Ensure apps/meat-worker is on path (dev + frozen)
 _HERE = Path(__file__).resolve().parent

@@ -12,6 +12,7 @@ import os
 import threading
 import time
 import uuid
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -30,6 +31,20 @@ def _job_dir() -> Path:
 _LOCK = threading.Lock()
 
 
+def _worker_token_expired() -> bool:
+    """Return whether the optional Worker token expiry has passed (fail closed)."""
+    raw = (os.environ.get("DOUYIN_WORKER_TOKEN_EXPIRES_AT") or "").strip()
+    if not raw:
+        return False
+    try:
+        expires_at = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if expires_at.tzinfo is None:
+            expires_at = expires_at.replace(tzinfo=timezone.utc)
+    except ValueError:
+        return True
+    return datetime.now(timezone.utc) >= expires_at.astimezone(timezone.utc)
+
+
 def worker_token_ok(authorization: str | None) -> bool:
     expected = (os.environ.get("DOUYIN_WORKER_TOKEN") or "").strip()
     if not expected:
@@ -40,6 +55,8 @@ def worker_token_ok(authorization: str | None) -> bool:
             "yes",
         }:
             return True
+        return False
+    if _worker_token_expired():
         return False
     if not authorization:
         return False

@@ -20,7 +20,7 @@ class ToolProbe(BaseModel):
 class ToolsStatusResponse(BaseModel):
     ok: bool
     probes: list[ToolProbe] = Field(default_factory=list)
-    note: str = "密钥由服务端配置，用户无需填写 API Key"
+    note: str = "抖音词分析依赖 MCP 网关和抖音肉机；跨境上架 Agent 为独立的 Temu 服务。密钥由服务端配置。"
 
 
 def _commander_base() -> str:
@@ -59,73 +59,40 @@ def _probe_mcp() -> ToolProbe:
 
 
 def _probe_meat_machine() -> ToolProbe:
-    """Commander agent online probe via HTTP; reads COMMANDER_* from settings only."""
-    token = _commander_token()
+    """Probe the Temu Agent WebSocket registration without user JWT."""
     agent = _default_agent()
-    if not token:
-        return ToolProbe(
-            id="commander_agent",
-            label=f"上架 Agent（{agent}）",
-            ok=False,
-            online=False,
-            detail="服务端未配置 COMMANDER_ACCESS_TOKEN",
-        )
+    label = "跨境上架 Agent（Temu）"
     try:
         with httpx.Client(timeout=20.0) as client:
-            resp = client.post(
-                f"{_commander_base()}/agent/list",
-                headers={"Authorization": f"Bearer {token}"},
-                json={},
-            )
+            resp = client.get(f"{_commander_base()}/agent/status", params={"id": agent})
             resp.raise_for_status()
             payload = resp.json()
-        if isinstance(payload, dict) and "code" in payload:
-            code = payload.get("code")
-            if code not in (0, "0", None):
-                msg = payload.get("msg") or payload.get("message") or str(payload)
-                return ToolProbe(
-                    id="commander_agent",
-                    label=f"上架 Agent（{agent}）",
-                    ok=False,
-                    online=False,
-                    detail=f"Commander 业务失败 code={code}: {msg}",
-                )
-            data = payload.get("data")
-        else:
-            data = payload
-        items = data if isinstance(data, list) else list((data or {}).get("list") or [])
-        match = None
-        for a in items:
-            if not isinstance(a, dict):
-                continue
-            name = str(a.get("name") or a.get("agentId") or a.get("id") or "")
-            if name == agent:
-                match = a
-                break
-        if match is None:
+        if not isinstance(payload, dict) or payload.get("code") not in (0, "0", None):
+            msg = payload.get("msg") if isinstance(payload, dict) else "状态响应非 JSON 对象"
             return ToolProbe(
                 id="commander_agent",
-                label=f"上架 Agent（{agent}）",
+                label=label,
                 ok=False,
                 online=False,
-                detail="未在 Agent 列表中找到",
+                detail=f"Temu Agent 状态查询失败：{msg or 'unknown error'}",
             )
-        st = match.get("status")
-        online = st is True or str(st).lower() in ("true", "1", "online", "on")
+        data = payload.get("data") or {}
+        online = bool(data.get("online")) if isinstance(data, dict) else False
+        name = str(data.get("name") or "").strip() if isinstance(data, dict) else ""
         return ToolProbe(
             id="commander_agent",
-            label=f"上架 Agent（{agent}）",
+            label=label,
             ok=online,
             online=online,
-            detail="在线" if online else "离线",
+            detail=f"在线{name and f' · {name}' or ''}" if online else "离线（未建立 Agent WebSocket 连接）",
         )
     except Exception as exc:  # noqa: BLE001
         return ToolProbe(
             id="commander_agent",
-            label=f"上架 Agent（{agent}）",
+            label=label,
             ok=False,
             online=False,
-            detail=f"探测失败：{exc}",
+            detail=f"跨境上架 Agent 状态探测失败：{exc}",
         )
 
 

@@ -63,6 +63,13 @@ class Settings(BaseSettings):
     douyin_worker_url: str = "https://www.yoto.work/platform-mcp"
     douyin_worker_token: str = ""
     douyin_worker_id: str = "肉机"
+    # BOSS reporting: API reads existing MySQL reports with a SELECT-only account.
+    boss_reports_db_host: str = ""
+    boss_reports_db_port: int = 3306
+    boss_reports_db_name: str = "douyin_reports"
+    boss_reports_db_user: str = ""
+    boss_reports_db_password: str = ""
+    boss_reports_db_connect_timeout_s: int = 5
 
     @model_validator(mode="after")
     def _derive_fallback(self) -> Settings:

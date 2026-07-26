@@ -155,13 +155,13 @@ class MeatWorker:
             },
         )
 
-    def refresh_login(self, *, headed: bool | None = None) -> dict[str, Any]:
+    def refresh_login(self, *, headed: bool = False) -> dict[str, Any]:
         with self._login_lock:
             self.cfg.apply_env()
             from handlers.douyin_collect import check_login_status
 
             try:
-                login = check_login_status(headed=self.cfg.headed if headed is None else headed)
+                login = check_login_status(headed=headed)
             except Exception as exc:  # noqa: BLE001
                 login = {
                     "logged_in": False,

@@ -34,7 +34,7 @@ export function ToolsStatusPage() {
         </button>
       </div>
       <p style={{ color: 'var(--muted)', fontSize: '0.9rem', marginTop: 0 }}>
-        只读探测：MCP 与上架 Agent（肉机）是否可用。API Key 由服务端配置，无需在页面填写。
+        只读探测：抖音词分析依赖 MCP 网关和抖音肉机（蝉妈妈）；跨境上架 Agent（Temu）是独立服务。API Key 由服务端配置。
       </p>
 
       {error && <p style={{ color: 'var(--down)' }}>{error}</p>}

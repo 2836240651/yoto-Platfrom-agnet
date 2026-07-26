@@ -101,10 +101,14 @@ async function main() {
     process.exit(1);
   }
   const token = (process.env.COMMANDER_ACCESS_TOKEN || "").trim();
+  const commanderAgentId = (process.env.COMMANDER_DEFAULT_AGENT_ID || "肉机").trim();
   const douyinWorkerToken = (
     process.env.DOUYIN_WORKER_TOKEN ||
     process.env.DOUYIN_WORKER_TOKEN_SET ||
     ""
+  ).trim();
+  const douyinWorkerTokenExpiresAt = (
+    process.env.DOUYIN_WORKER_TOKEN_EXPIRES_AT || ""
   ).trim();
   if (!douyinWorkerToken) {
     console.error(
@@ -163,13 +167,21 @@ async function main() {
     volumes:
       - ${REMOTE_DIR}/uploads:/data/uploads:ro
       - ${REMOTE_DIR}/douyin-jobs:/data/douyin-jobs
+    networks:
+      - agent-platform
+
+networks:
+  agent-platform:
+    external: true
+    name: agent-platform-net
 `;
   const envBody = [
     "COMMANDER_API_BASE=https://www.yoto.work/api/v1",
     `COMMANDER_ACCESS_TOKEN=${token}`,
-    "COMMANDER_DEFAULT_AGENT_ID=肉机",
+    `COMMANDER_DEFAULT_AGENT_ID=${commanderAgentId}`,
     "COMMANDER_DEFAULT_PLATFORM=temu",
     `DOUYIN_WORKER_TOKEN=${douyinWorkerToken}`,
+    `DOUYIN_WORKER_TOKEN_EXPIRES_AT=${douyinWorkerTokenExpiresAt}`,
     "DOUYIN_JOB_DIR=/data/douyin-jobs",
     "DOUYIN_JOB_TIMEOUT_S=360",
     "SOCIAL_UPLOAD_API_BASE=https://automedia.yoto.work",

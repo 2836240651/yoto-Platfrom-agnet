@@ -11,5 +11,5 @@ router = APIRouter(prefix="/tools", tags=["tools"])
 
 @router.get("/status", response_model=ToolsStatusResponse)
 def tools_status() -> ToolsStatusResponse:
-    """MCP + Commander Agent online probes. No secrets; no write ops."""
+    """Read-only MCP, Douyin worker, and separate Temu Commander probes."""
     return get_tools_status()

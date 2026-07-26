@@ -142,6 +142,8 @@ venv.bak/
 # Scratch probes / local dumps (never commit)
 _tmp_*.json
 _tmp_*.py
+scripts/_tmp_*.sh
+apps/workspace-desktop/release/win-unpacked.tmp/
 node_modules/
 apps/web/node_modules/
 

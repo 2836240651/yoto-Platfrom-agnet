@@ -38,7 +38,7 @@ def config_path() -> Path:
     sidecar = Path.cwd() / "config.json"
     if sidecar.is_file():
         return sidecar
-    exe_dir = Path(os.environ.get("MEAT_WORKER_DIR") or "").strip()
+    exe_dir = (os.environ.get("MEAT_WORKER_DIR") or "").strip()
     if exe_dir:
         p = Path(exe_dir) / "config.json"
         if p.is_file():
@@ -52,7 +52,7 @@ class MeatConfig:
     worker_token: str = ""
     worker_id: str = DEFAULT_WORKER_ID
     poll_s: float = 3.0
-    headed: bool = False
+    headed: bool = True
     chrome_user_data_dir: str = ""
     use_system_chrome: bool = True
     claim_enabled: bool = True
@@ -108,7 +108,7 @@ def load_config() -> MeatConfig:
     path = config_path()
     if path.is_file():
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
+            data = json.loads(path.read_text(encoding="utf-8-sig"))
             if isinstance(data, dict):
                 file_cfg = _from_mapping(data)
                 # File wins for empty env token

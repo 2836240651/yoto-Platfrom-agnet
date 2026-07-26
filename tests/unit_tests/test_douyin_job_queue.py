@@ -34,6 +34,16 @@ def test_worker_token_auth(job_dir: Path) -> None:
     assert djq.worker_token_ok(None) is False
 
 
+def test_worker_token_expiry_is_enforced(job_dir: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+    import douyin_job_queue as djq
+
+    monkeypatch.setenv("DOUYIN_WORKER_TOKEN_EXPIRES_AT", "2000-01-01T00:00:00Z")
+    assert djq.worker_token_ok("Bearer test-token") is False
+
+    monkeypatch.setenv("DOUYIN_WORKER_TOKEN_EXPIRES_AT", "2999-01-01T00:00:00Z")
+    assert djq.worker_token_ok("Bearer test-token") is True
+
+
 def test_enqueue_claim_complete(job_dir: Path) -> None:
     import douyin_job_queue as djq
 

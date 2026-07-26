@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import secrets
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -16,6 +17,7 @@ DEFAULTS = {
     "DEPLOY_HOST": "124.223.27.98",
     "DEPLOY_USER": "root",
 }
+TOKEN_TTL_DAYS = 30
 
 
 def parse_env(text: str) -> list[tuple[str, str | None, str]]:
@@ -88,6 +90,28 @@ def main() -> None:
         updates["DOUYIN_WORKER_TOKEN"] = secrets.token_urlsafe(32)
         token_action = "generated"
 
+    existing_expiry = get_value(text, "DOUYIN_WORKER_TOKEN_EXPIRES_AT")
+    try:
+        parsed_expiry = (
+            datetime.fromisoformat((existing_expiry or "").replace("Z", "+00:00"))
+            if existing_expiry
+            else None
+        )
+        if parsed_expiry and parsed_expiry.tzinfo is None:
+            parsed_expiry = parsed_expiry.replace(tzinfo=timezone.utc)
+    except ValueError:
+        parsed_expiry = None
+    if parsed_expiry and parsed_expiry > datetime.now(timezone.utc):
+        updates["DOUYIN_WORKER_TOKEN_EXPIRES_AT"] = parsed_expiry.astimezone(
+            timezone.utc
+        ).isoformat().replace("+00:00", "Z")
+        expiry_action = "kept"
+    else:
+        updates["DOUYIN_WORKER_TOKEN_EXPIRES_AT"] = (
+            datetime.now(timezone.utc) + timedelta(days=TOKEN_TTL_DAYS)
+        ).replace(microsecond=0).isoformat().replace("+00:00", "Z")
+        expiry_action = f"set_{TOKEN_TTL_DAYS}d"
+
     # Leave DEPLOY_PASS alone if set; otherwise add empty placeholder for user to fill
     deploy_pass = get_value(text, "DEPLOY_PASS")
     if deploy_pass is None:
@@ -100,6 +124,7 @@ def main() -> None:
 
     comments = {
         "DOUYIN_WORKER_TOKEN": "# shared by meat worker + server platform-mcp (do not commit)",
+        "DOUYIN_WORKER_TOKEN_EXPIRES_AT": "# UTC expiry enforced by platform-mcp; refresh before it expires",
         "DEPLOY_PASS": "# SSH password for DEPLOY_USER@DEPLOY_HOST (same as $env:P); do not commit",
     }
     new_text = upsert(text, updates, comments)
@@ -111,6 +136,7 @@ def main() -> None:
     print("DOUYIN_WORKER_URL", updates["DOUYIN_WORKER_URL"])
     print("DOUYIN_WORKER_ID", updates["DOUYIN_WORKER_ID"])
     print("DOUYIN_WORKER_TOKEN", f"{token_action} len={len(tok)} prefix={tok[:4]}…")
+    print("DOUYIN_WORKER_TOKEN_EXPIRES_AT", expiry_action)
     print("DEPLOY_HOST", updates["DEPLOY_HOST"])
     print("DEPLOY_USER", updates["DEPLOY_USER"])
     print("DEPLOY_PASS", pass_action)
