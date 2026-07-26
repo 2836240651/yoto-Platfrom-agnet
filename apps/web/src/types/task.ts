@@ -14,6 +14,10 @@ export interface KeywordCard {
   metrics: MetricItem[]
   evidence: string[]
   action: string
+  queried_term?: string | null
+  query_level?: string | null
+  query_source?: string | null
+  query_dimension?: string | null
 }
 
 export interface AlertItem {

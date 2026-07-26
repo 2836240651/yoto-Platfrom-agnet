@@ -38,6 +38,10 @@ def _card(raw: dict[str, Any]) -> KeywordCard:
         metrics=[MetricItem(label=m["label"], value=m["value"]) for m in raw.get("metrics") or []],
         evidence=list(raw.get("evidence") or []),
         action=raw.get("action") or "",
+        queried_term=raw.get("queried_term"),
+        query_level=raw.get("query_level"),
+        query_source=raw.get("query_source"),
+        query_dimension=raw.get("query_dimension"),
     )
 
 

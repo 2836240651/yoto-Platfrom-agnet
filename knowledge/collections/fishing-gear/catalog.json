@@ -38,7 +38,8 @@
       {"canonical": "千又鱼钩", "aliases": ["千又", "千又钩"], "variants": ["千又钩"], "tags": ["鱼钩"]},
       {"canonical": "串钩", "aliases": ["串钩线组"], "variants": ["串钩绑法"], "tags": ["钓组"]},
       {"canonical": "爆炸钩", "aliases": ["爆炸钩线组"], "variants": ["爆炸钩饵料"], "tags": ["钓组"]},
-      {"canonical": "反底钓", "aliases": ["反底钓法", "反底钓组"], "variants": ["反底钓法", "反底钓线组"], "tags": ["钓法", "线组"]}
+      {"canonical": "反底钓", "aliases": ["反底钓法", "反底钓组"], "variants": ["反底钓法", "反底钓线组"], "tags": ["钓法", "线组"]},
+      {"canonical": "欧鲤钓", "aliases": ["欧鲤", "欧洲鲤钓"], "variants": ["欧鲤钓组", "欧鲤反底钓组"], "search_terms": [{"term": "欧鲤钓组", "dimension": "tackle"}, {"term": "欧鲤反底钓组", "dimension": "product"}], "tags": ["鲤鱼", "钓法", "线组"]}
     ]},
     {"name": "浮漂与铅坠", "entries": [
       {"canonical": "浮漂", "aliases": ["鱼漂", "漂"], "variants": ["浮漂调钓"], "tags": ["台钓"]},
@@ -70,7 +71,36 @@
       {"canonical": "竿架", "aliases": ["炮台", "支架"], "variants": ["竿架调节"], "tags": ["配件"]},
       {"canonical": "控鱼器", "aliases": ["鱼嘴钳", "控鱼钳"], "variants": ["控鱼器路亚"], "tags": ["路亚", "配件"]},
       {"canonical": "探鱼器", "aliases": ["鱼探", "声呐"], "variants": ["探鱼器船钓"], "tags": ["电子装备"]},
-      {"canonical": "涉水裤", "aliases": ["连体雨裤", "钓鱼涉水裤"], "variants": ["涉水裤钓鱼"], "tags": ["服装"]}
+      {"canonical": "涉水裤", "aliases": ["连体雨裤", "钓鱼涉水裤"], "variants": ["涉水裤钓鱼"], "tags": ["服装"]},
+      {"canonical": "飞蝇线", "aliases": ["飞钓线", "fly line"], "variants": ["飞蝇线前导", "飞蝇线搭配"], "tags": ["飞钓", "鱼线"]},
+      {"canonical": "钓鱼灯", "aliases": ["夜钓灯", "头灯"], "variants": ["夜钓灯支架", "夜钓灯钓鱼"], "tags": ["夜钓", "电子装备"]},
+      {"canonical": "打窝船", "aliases": ["遥控打窝船", "送钩船"], "variants": ["打窝船遥控", "打窝船钓鱼"], "tags": ["电子装备", "鲤鱼"]}
+    ]},
+    {"name": "钓法与场景", "entries": [
+      {"canonical": "桥筏", "aliases": ["桥筏钓", "桥筏微铅"], "variants": ["桥筏微铅", "桥筏钓组"], "tags": ["筏钓", "微铅"]},
+      {"canonical": "筏钓", "aliases": ["筏钓法", "筏钓微铅"], "variants": ["筏钓线组", "筏钓微铅"], "tags": ["筏竿", "渔轮"]},
+      {"canonical": "传统钓", "aliases": ["传统钓法", "长竿短线"], "variants": ["长竿短线钓组", "传统钓线组"], "tags": ["淡水", "鲫鱼"]},
+      {"canonical": "黑坑钓", "aliases": ["黑坑", "坑钓"], "variants": ["黑坑钓组", "黑坑饵料"], "tags": ["淡水", "鲤鱼"]},
+      {"canonical": "野钓", "aliases": ["野河钓", "野外钓鱼"], "variants": ["野钓线组", "野钓饵料"], "tags": ["淡水"]},
+      {"canonical": "鲢鳙钓", "aliases": ["钓鲢鳙", "鲢鳙"], "variants": ["鲢鳙钓组", "鲢鳙饵料"], "tags": ["对象鱼", "浮钓"]},
+      {"canonical": "雷强", "aliases": ["雷强钓", "雷强路亚"], "variants": ["雷强竿", "雷强蛙"], "tags": ["路亚", "黑鱼"]},
+      {"canonical": "微物路亚", "aliases": ["微物", "微物钓"], "variants": ["微物路亚竿", "微物拟饵"], "tags": ["路亚", "轻量"]},
+      {"canonical": "海钓", "aliases": ["海钓路亚", "海边钓鱼"], "variants": ["海钓钓组", "海钓远投"], "tags": ["海水"]},
+      {"canonical": "船钓", "aliases": ["船矶钓", "船钓海钓"], "variants": ["船钓钓组", "船钓铁板"], "tags": ["海水"]},
+      {"canonical": "溪流钓", "aliases": ["溪钓", "溪流竿"], "variants": ["溪流钓线组", "溪流钓鱼钩"], "tags": ["淡水", "轻量"]},
+      {"canonical": "冰钓", "aliases": ["冰上钓鱼", "冰钓法"], "variants": ["冰钓线组", "冰钓饵料"], "tags": ["冬钓"]}
+    ]},
+    {"name": "钓组与连接件", "entries": [
+      {"canonical": "德州钓组", "aliases": ["德州", "Texas rig"], "variants": ["德州钓组软虫", "德州钓组钨钢坠"], "tags": ["路亚", "软饵"]},
+      {"canonical": "倒钓钓组", "aliases": ["倒钓", "drop shot"], "variants": ["倒钓钓组软虫", "倒钓铅坠"], "tags": ["路亚", "软饵"]},
+      {"canonical": "卡罗莱纳钓组", "aliases": ["卡罗莱纳", "Carolina rig"], "variants": ["卡罗莱纳钓组", "卡罗莱纳铅坠"], "tags": ["路亚"]},
+      {"canonical": "自由钓组", "aliases": ["自由钓", "free rig"], "variants": ["自由钓组钨钢坠", "自由钓组软虫"], "tags": ["路亚"]},
+      {"canonical": "无铅钓组", "aliases": ["无铅", "无铅钓"], "variants": ["无铅钓组软虫", "无铅钓组路亚"], "tags": ["路亚", "环保"]},
+      {"canonical": "八字环", "aliases": ["八字环连接器", "转环"], "variants": ["八字环线组", "八字环钓鱼"], "tags": ["线组", "连接件"]},
+      {"canonical": "快速别针", "aliases": ["路亚别针", "别针连接器"], "variants": ["快速别针路亚", "别针连接环"], "tags": ["路亚", "连接件"]},
+      {"canonical": "太空豆", "aliases": ["挡豆", "定位豆"], "variants": ["太空豆线组", "太空豆钓鱼"], "tags": ["台钓", "线组"]},
+      {"canonical": "漂座", "aliases": ["浮漂座", "漂座配件"], "variants": ["漂座线组", "浮漂座配件"], "tags": ["台钓", "线组"]},
+      {"canonical": "铅皮座", "aliases": ["铅座", "铅皮座配件"], "variants": ["铅皮座线组", "铅皮座钓鱼"], "tags": ["台钓", "线组"]}
     ]}
   ]
 }

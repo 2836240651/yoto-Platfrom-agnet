@@ -34,6 +34,14 @@ def _catalog() -> list[dict[str, Any]]:
                     "canonical": canonical,
                     "aliases": [value for value in aliases if value],
                     "variants": [str(value).strip() for value in entry.get("variants") or [] if str(value).strip()],
+                    "search_terms": [
+                        {
+                            "term": str(value.get("term") or "").strip(),
+                            "dimension": str(value.get("dimension") or "variant").strip() or "variant",
+                        }
+                        for value in entry.get("search_terms") or []
+                        if isinstance(value, dict) and str(value.get("term") or "").strip()
+                    ],
                     "tags": [str(value).strip() for value in entry.get("tags") or [] if str(value).strip()],
                 }
             )
@@ -74,17 +82,19 @@ def plan_fishing_gear_queries(seed: str, *, max_expansions: int = 2) -> dict[str
         }
 
     seed_key = _normalized(clean_seed)
-    terms: list[tuple[str, str]] = []
+    terms: list[tuple[str, str, str]] = []
     canonical = str(entry["canonical"])
     if _normalized(canonical) != seed_key:
-        terms.append((canonical, "kb_canonical"))
+        terms.append((canonical, "kb_canonical", "canonical"))
+    for item in entry["search_terms"]:
+        terms.append((item["term"], "kb_dimension", item["dimension"]))
     for variant in entry["variants"]:
         if _normalized(variant) != seed_key:
-            terms.append((variant, "kb_narrow_variant"))
+            terms.append((variant, "kb_narrow_variant", "variant"))
 
     seen = {seed_key}
     query_plan: list[dict[str, str]] = []
-    for term, relation in terms:
+    for term, relation, dimension in terms:
         normalized_term = _normalized(term)
         if not normalized_term or normalized_term in seen or term in _BROAD_TERMS:
             continue
@@ -94,6 +104,7 @@ def plan_fishing_gear_queries(seed: str, *, max_expansions: int = 2) -> dict[str
                 "term": term,
                 "source": "fishing_gear_kb",
                 "relation": relation,
+                "query_dimension": dimension,
                 "matched_alias": matched_alias,
                 "canonical": canonical,
             }

@@ -44,9 +44,9 @@ Profile：`DOUYIN_CHROME_USER_DATA_DIR` 或默认 `.local/chanmama-chrome`（不
 
 - Call `douyin_collect_hot_keywords` with the exact seed first. Do not silently substitute broad terms such as fishing or tackle.
 - Read `status` and `diagnostics` before analysis. `no_data` must be reported truthfully with its diagnostic counts; `upstream_error` and `parse_error` require investigation, never generated keywords. An `errCode` such as `55006` is an upstream observation, not proof that a broad seed permanently has no data; retain the HTTP status, raw count, parsed count, and timestamp before concluding.
-- Only send expansion terms through an explicit `query_plan`; every item needs `term` and `source`. Preserve `queried_term`, `query_level`, and `query_source` in all downstream reasoning and reports.
+- Only send expansion terms through an explicit `query_plan`; every item needs `term`, `source`, and `query_dimension`. Preserve `queried_term`, `query_level`, `query_source`, and `query_dimension` in all downstream reasoning, diagnostics, and reports.
 - Never present an expansion result as evidence for the original seed.
 - Default to the exact seed. For a niche seed that has an explicit upstream expansion decision, `query_plan` may contain at most 2 narrow variants. Each variant must preserve the seed's technical qualifier and add only a use-case or form qualifier (for example, `反底钓` → `反底钓法` / `反底钓线组`).
 - Do not remove or generalize the seed's technical qualifier. In particular, do not expand a niche query into broad category terms such as `钓鱼、渔具、鱼竿`, and do not create bridge seeds inside the collection black box.
-- Label every expansion-derived card with its `queried_term` and source. Do not present expansion results as the original seed's measured result.
+- Label every expansion-derived card with its `queried_term`, source, and dimension. Do not present expansion results as the original seed's measured result.
 - When operations need to verify browser automation, use the meat worker's authorized **有头浏览器** mode for one real collection task and record only page URL/title, HTTP status, errCode, raw count, and parsed count. Never expose Cookie or Token.

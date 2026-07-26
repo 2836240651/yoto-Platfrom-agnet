@@ -28,6 +28,7 @@ def test_compact_collect_preserves_query_lineage_for_llm_analysis():
                 "queried_term": "海夕鱼钩",
                 "query_level": "explicit_expansion",
                 "query_source": "fishing_gear_kb",
+                "query_dimension": "hook",
             }
         ],
     }
@@ -43,8 +44,36 @@ def test_compact_collect_preserves_query_lineage_for_llm_analysis():
             "queried_term": "海夕鱼钩",
             "query_level": "explicit_expansion",
             "query_source": "fishing_gear_kb",
+            "query_dimension": "hook",
         }
     ]
+
+
+def test_normalize_categories_preserves_query_dimension_on_final_card():
+    rows = [
+        {
+            "word": "\u6d77\u5915\u9c7c\u94a9\u5b9e\u6218",
+            "hot_level": 100,
+            "side": "video",
+            "queried_term": "\u6d77\u5915\u9c7c\u94a9",
+            "query_level": "explicit_expansion",
+            "query_source": "fishing_gear_kb",
+            "query_dimension": "hook",
+        }
+    ]
+    cats = _normalize_categories(
+        "\u6d77\u59158\u53f7",
+        {"video_hot": [{"keyword": "\u6d77\u5915\u9c7c\u94a9\u5b9e\u6218"}]},
+        rows,
+        include_video=True,
+        include_product=False,
+    )
+
+    card = cats["video_hot"][0]
+    assert card["queried_term"] == "\u6d77\u5915\u9c7c\u94a9"
+    assert card["query_level"] == "explicit_expansion"
+    assert card["query_source"] == "fishing_gear_kb"
+    assert card["query_dimension"] == "hook"
 
 
 def test_normalize_categories_from_llm_shape():

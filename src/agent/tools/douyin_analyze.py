@@ -18,7 +18,7 @@ _DOUYIN_ANALYSIS_SYSTEM_PROMPT = (
     "你是跨境电商抖音选品与内容运营专家。只输出合法 JSON。"
     "只可基于输入的采集词生成分析；视频侧与商品侧严格分栏，分析要具体可执行。"
     "不得将 no_data、upstream_error 或 parse_error 转成关键词建议，也不得补造未采集词。"
-    "必须尊重 queried_term、query_level、query_source；显式 query_plan 的扩词不得表述为原种子词的实测结果。"
+    "必须尊重 queried_term、query_level、query_source、query_dimension；显式 query_plan 的扩词不得表述为原种子词的实测结果。"
 )
 
 
@@ -50,7 +50,7 @@ def _compact_collect(collect: dict[str, Any], *, limit: int = 80) -> list[dict[s
             continue
         values = {
             key: str(item.get(key) or "").strip()
-            for key in ("queried_term", "query_level", "query_source")
+            for key in ("queried_term", "query_level", "query_source", "query_dimension")
             if str(item.get(key) or "").strip()
         }
         if values:
@@ -149,6 +149,7 @@ def _card(
     side: str = "video",
     bucket: str = "video_hot",
     evidence: list[str] | None = None,
+    lineage: dict[str, str] | None = None,
 ) -> dict:
     side_s = "product" if side == "product" or bucket.startswith("product") else "video"
     ev = evidence or [
@@ -156,7 +157,7 @@ def _card(
         f"蝉妈妈热度：{format_heat(hot)}",
         "LLM 运营分析",
     ]
-    return {
+    card = {
         "keyword": word,
         "priority": priority if priority in ("P0", "P1", "P2") else "P1",
         "trend": "up" if hot > 0 else "flat",
@@ -166,11 +167,15 @@ def _card(
         "action": action
         or f"围绕「{word}」做一条可复盘的{_side_label(side_s)}测试（记录完播/点击）。",
     }
+    if lineage:
+        card.update(lineage)
+    return card
 
 
-def _heat_maps(rows: list[dict[str, Any]]) -> tuple[dict[str, int], dict[str, str]]:
+def _heat_maps(rows: list[dict[str, Any]]) -> tuple[dict[str, int], dict[str, str], dict[str, dict[str, str]]]:
     heat: dict[str, int] = {}
     side_of: dict[str, str] = {}
+    lineage: dict[str, dict[str, str]] = {}
     for r in rows:
         w = str(r.get("word") or "")
         if not w:
@@ -179,7 +184,11 @@ def _heat_maps(rows: list[dict[str, Any]]) -> tuple[dict[str, int], dict[str, st
         if h >= heat.get(w, -1):
             heat[w] = h
             side_of[w] = str(r.get("side") or "video")
-    return heat, side_of
+            lineage[w] = {
+                key: str(r.get(key) or "")
+                for key in ("queried_term", "query_level", "query_source", "query_dimension")
+            }
+    return heat, side_of, lineage
 
 
 def _allowed_words(rows: list[dict[str, Any]], side: str) -> set[str]:
@@ -194,7 +203,7 @@ def _normalize_categories(
     include_video: bool,
     include_product: bool,
 ) -> dict[str, list[dict]]:
-    heat, side_of = _heat_maps(rows)
+    heat, side_of, lineage_by_word = _heat_maps(rows)
     video_ok = _allowed_words(rows, "video")
     product_ok = _allowed_words(rows, "product")
     cats: dict[str, list[dict]] = {k: [] for k in _BUCKETS}
@@ -242,6 +251,7 @@ def _normalize_categories(
                     side=want_side,
                     bucket=bucket,
                     evidence=evidence,
+                    lineage=lineage_by_word.get(word),
                 )
             )
     return cats
@@ -370,7 +380,7 @@ def analyze_and_optimize(
         f"{json.dumps(product_rows, ensure_ascii=False)}\n\n"
         "任务：做抖音「视频内容」与「商品带货」双侧运营深分析。"
         "严禁编造未出现的词；严禁视频词进商品栏、商品词进视频栏。\n"
-        "每个输入词携带 queried_term、query_level、query_source 查询血缘；不得丢弃、替换，"
+        "每个输入词携带 queried_term、query_level、query_source、query_dimension 查询血缘；不得丢弃、替换，"
         "也不得把显式扩词的结果写成原种子词的实测结果。\n"
         "输出 JSON（不要 markdown）：\n"
         "{\n"

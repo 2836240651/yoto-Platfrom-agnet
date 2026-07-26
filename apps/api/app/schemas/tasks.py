@@ -96,6 +96,10 @@ class KeywordCard(BaseModel):
     metrics: list[MetricItem]
     evidence: list[str]
     action: str
+    queried_term: str | None = None
+    query_level: str | None = None
+    query_source: str | None = None
+    query_dimension: str | None = None
 
 
 class AlertItem(BaseModel):

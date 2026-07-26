@@ -24,6 +24,27 @@ def test_hook_alias_resolves_to_canonical_product_without_broad_bridge():
     assert result["category"] == "鱼钩与钓组"
 
 
+def test_niche_plan_keeps_query_dimensions_for_multi_route_collection():
+    result = plan_fishing_gear_queries("欧鲤钓")
+
+    assert [(item["term"], item["query_dimension"]) for item in result["query_plan"]] == [
+        ("欧鲤钓组", "tackle"),
+        ("欧鲤反底钓组", "product"),
+    ]
+
+
+@pytest.mark.parametrize(
+    "seed",
+    ["桥筏微铅", "德州钓组", "倒钓", "无铅钓组", "长竿短线", "鲢鳙钓", "飞蝇线", "雷强"],
+)
+def test_market_niche_terms_resolve_without_broad_fallback(seed):
+    result = plan_fishing_gear_queries(seed)
+
+    assert result["matched"] is True
+    assert result["query_plan"]
+    assert all(item["term"] not in {"钓鱼", "渔具", "鱼竿"} for item in result["query_plan"])
+
+
 @pytest.mark.parametrize(
     ("seed", "canonical", "terms"),
     [
@@ -32,6 +53,7 @@ def test_hook_alias_resolves_to_canonical_product_without_broad_bridge():
         ("筏轮微铅", "筏钓轮", ["筏钓轮", "筏钓轮微铅"]),
         ("钨坠", "钨钢坠", ["钨钢坠", "钨钢坠路亚"]),
         ("波爬", "波爬", ["波爬拟饵"]),
+        ("欧鲤钓", "欧鲤钓", ["欧鲤钓组", "欧鲤反底钓组"]),
     ],
 )
 def test_five_niche_fishing_terms_have_auditable_narrow_query_plans(seed, canonical, terms):

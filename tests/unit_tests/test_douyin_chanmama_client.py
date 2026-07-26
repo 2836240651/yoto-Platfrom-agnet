@@ -85,17 +85,21 @@ def test_collect_no_data_returns_safe_video_search_diagnostic():
     assert result["diagnostics"][0]["parsed_item_count"] == 0
     assert result["diagnostics"][0]["route"] == "aweme_search"
     assert calls == [("video", "\u5927\u7269\u7aff")]
-def test_collect_explicit_query_plan_keeps_query_lineage():
+def test_collect_explicit_query_plan_keeps_query_lineage_and_dimension():
     seen_terms: list[str] = []
 
     def ui_search(*, chain: str, term: str):
         seen_terms.append(term)
         return {"route": "aweme_search", "request": {"keyword": term}, "http_status": 200, "payload": {"errCode": 0, "data": {"list": [{"aweme_info": {"desc": f"{term}\u89c6\u9891", "digg_count": 100}}]}}}
 
-    result = _session_with_ui(ui_search).collect_hot_keywords("\u5927\u7269\u7aff", include_product=False, query_plan=[{"term": "\u5de8\u7269\u7aff", "source": "operator_expansion"}])
+    result = _session_with_ui(ui_search).collect_hot_keywords("\u5927\u7269\u7aff", include_product=False, query_plan=[{"term": "\u5de8\u7269\u7aff", "source": "operator_expansion", "query_dimension": "rod"}])
     assert seen_terms == ["\u5927\u7269\u7aff", "\u5de8\u7269\u7aff"]
     assert result["status"] == "ok"
     assert {(item["queried_term"], item["query_level"], item["query_source"]) for item in result["keywords"]} == {("\u5927\u7269\u7aff", "seed", "seed"), ("\u5de8\u7269\u7aff", "explicit_expansion", "operator_expansion")}
+    expansion = next(item for item in result["keywords"] if item["queried_term"] == "\u5de8\u7269\u7aff")
+    assert expansion["query_dimension"] == "rod"
+    diagnostic = next(item for item in result["diagnostics"] if item["queried_term"] == "\u5de8\u7269\u7aff")
+    assert diagnostic["query_dimension"] == "rod"
 def test_collect_empty_product_search_is_no_data_with_diagnostic():
     def ui_search(*, chain: str, term: str):
         assert chain == "product"

@@ -124,6 +124,14 @@ export function KeywordCard({
         ))}
       </ul>
 
+      {card.queried_term ? (
+        <div style={{ color: 'var(--muted)', fontSize: '0.78rem', marginBottom: 12 }}>
+          查询词：{card.queried_term}
+          {card.query_level === 'explicit_expansion' ? '（知识库窄扩词）' : ''}
+          {card.query_dimension ? ` · 维度：${card.query_dimension}` : ''}
+        </div>
+      ) : null}
+
       <div style={{ background: '#f0fdfa', borderRadius: 8, padding: '12px 14px', fontSize: '0.9rem', lineHeight: 1.5 }}>
         <strong style={{ color: '#0f766e' }}>行动建议：</strong> {card.action}
       </div>
