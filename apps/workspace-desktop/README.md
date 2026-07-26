@@ -4,6 +4,8 @@
 
 当前使用 Electron 默认图标；与闲置机 **MeatWorker.exe** 完全分离。
 
+macOS 包由 GitHub Actions 在原生 Intel / Apple Silicon Runner 上构建，发布为未签名的 DMG 与 ZIP；首次打开可能需要在 macOS 安全设置中确认。
+
 ## 角色对照
 
 | 产物 | 给谁 | 干什么 |

@@ -48,6 +48,19 @@
     },
     "portable": {
       "artifactName": "TUODIAO-${version}-portable.exe"
+    },
+    "mac": {
+      "target": [
+        {
+          "target": "dmg",
+          "arch": ["x64", "arm64"]
+        },
+        {
+          "target": "zip",
+          "arch": ["x64", "arm64"]
+        }
+      ],
+      "artifactName": "TUODIAO-${version}-mac-${arch}.${ext}"
     }
   },
   "devDependencies": {
