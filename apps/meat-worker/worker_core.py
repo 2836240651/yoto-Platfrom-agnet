@@ -19,6 +19,8 @@ logger = logging.getLogger("meat_worker")
 
 HandlerFn = Callable[[dict[str, Any], MeatConfig], dict[str, Any]]
 
+_COMPLETE_RETRY_ATTEMPTS = 3
+
 
 @dataclass
 class WorkerState:
@@ -143,17 +145,35 @@ class MeatWorker:
         result: dict[str, Any] | None = None,
         error: str | None = None,
     ) -> dict[str, Any]:
-        return self._request(
-            "POST",
-            "/worker/complete",
-            {
-                "worker_id": self.cfg.worker_id,
-                "job_id": job_id,
-                "ok": ok,
-                "result": result,
-                "error": error,
-            },
-        )
+        body = {
+            "worker_id": self.cfg.worker_id,
+            "job_id": job_id,
+            "ok": ok,
+            "result": result,
+            "error": error,
+        }
+        for attempt in range(1, _COMPLETE_RETRY_ATTEMPTS + 1):
+            try:
+                return self._request("POST", "/worker/complete", body)
+            except Exception as exc:  # noqa: BLE001
+                message = safe_err(exc)
+                transient = (
+                    "timeout" in message.lower()
+                    or "unreachable" in message.lower()
+                    or "http 5" in message.lower()
+                )
+                if not transient or attempt == _COMPLETE_RETRY_ATTEMPTS:
+                    raise
+                delay_s = float(attempt)
+                logger.warning(
+                    "complete retry %s/%s job=%s after %s",
+                    attempt,
+                    _COMPLETE_RETRY_ATTEMPTS,
+                    job_id,
+                    message,
+                )
+                time.sleep(delay_s)
+        raise RuntimeError("worker complete retries exhausted")
 
     def refresh_login(self, *, headed: bool | None = None) -> dict[str, Any]:
         with self._login_lock:
