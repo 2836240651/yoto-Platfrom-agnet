@@ -138,6 +138,9 @@ venv.bak/
 
 # Local browser profiles / Chanmama session (never commit)
 .local/
+apps/meat-worker/crossborder/vendor/.temu-browser-profile/
+apps/meat-worker/crossborder/vendor/.aliexpress-browser-profile/
+apps/meat-worker/crossborder/exports/
 
 # Scratch probes / local dumps (never commit)
 _tmp_*.json

@@ -28,6 +28,8 @@ def _job_dir() -> Path:
 
 
 _LOCK = threading.Lock()
+_CROSSBORDER_PLATFORMS = frozenset({"temu", "aliexpress"})
+_SENSITIVE_KEY_PARTS = ("token", "cookie", "oauth", "authorization", "password", "secret")
 
 
 def worker_token_ok(authorization: str | None) -> bool:
@@ -167,17 +169,125 @@ def enqueue_collect(
     return job
 
 
-def claim_job(*, worker_id: str) -> dict[str, Any] | None:
+def _redact(value: Any) -> Any:
+    if isinstance(value, dict):
+        return {
+            str(key): "[REDACTED]"
+            if any(part in str(key).lower() for part in _SENSITIVE_KEY_PARTS)
+            else _redact(item)
+            for key, item in value.items()
+        }
+    if isinstance(value, list):
+        return [_redact(item) for item in value]
+    return value
+
+
+def enqueue_crossborder_sync(
+    *,
+    platform: str,
+    account_ref: str,
+    scope: str,
+    date_start: str = "",
+    date_end: str = "",
+    force: bool = False,
+) -> dict[str, Any]:
+    normalized_platform = (platform or "").strip().lower()
+    if normalized_platform not in _CROSSBORDER_PLATFORMS:
+        raise ValueError(f"unsupported platform: {normalized_platform or 'empty'}")
+    normalized_account_ref = (account_ref or "").strip()
+    normalized_scope = (scope or "").strip().lower()
+    if not normalized_account_ref:
+        raise ValueError("account_ref is required")
+    if not normalized_scope:
+        raise ValueError("scope is required")
+    job_id = uuid.uuid4().hex[:16]
+    now = time.time()
+    job = {
+        "id": job_id,
+        "type": "crossborder_sync",
+        "status": "pending",
+        "created_at": now,
+        "updated_at": now,
+        "args": {
+            "platform": normalized_platform,
+            "account_ref": normalized_account_ref,
+            "scope": normalized_scope,
+            "date_start": (date_start or "").strip(),
+            "date_end": (date_end or "").strip(),
+            "force": bool(force),
+        },
+        "worker_id": None,
+        "result": None,
+        "error": None,
+    }
+    with _LOCK:
+        _write_json(_job_dir() / "pending" / f"{job_id}.json", job)
+    return job
+
+
+def get_crossborder_sync(job_id: str) -> dict[str, Any]:
+    job = get_job(job_id)
+    if not job:
+        return {"ok": False, "error": f"job not found: {job_id}"}
+    if job.get("type") != "crossborder_sync":
+        return {"ok": False, "error": f"not a crossborder job: {job_id}"}
+    args = job.get("args") if isinstance(job.get("args"), dict) else {}
+    status = str(job.get("status") or "")
+    return {
+        "ok": status != "failed",
+        "job_id": job.get("id"),
+        "status": status,
+        "platform": args.get("platform"),
+        "account_ref": args.get("account_ref"),
+        "scope": args.get("scope"),
+        "result": _redact(job.get("result")),
+        "error": job.get("error"),
+    }
+
+
+def crossborder_auth_status(*, platform: str = "", account_ref: str = "") -> dict[str, Any]:
+    normalized_platform = (platform or "").strip().lower()
+    if normalized_platform and normalized_platform not in _CROSSBORDER_PLATFORMS:
+        return {"ok": False, "error": f"unsupported platform: {normalized_platform}"}
+    workers = list_workers()
+    online = [worker for worker in workers if worker.get("online")]
+    states: list[dict[str, Any]] = []
+    for worker in online:
+        detail = worker.get("detail") if isinstance(worker.get("detail"), dict) else {}
+        platforms = detail.get("platforms") if isinstance(detail.get("platforms"), dict) else {}
+        if normalized_platform:
+            state = platforms.get(normalized_platform)
+            if isinstance(state, dict):
+                states.append({"worker_id": worker.get("worker_id"), **_redact(state)})
+    return {
+        "ok": bool(online),
+        "platform": normalized_platform or None,
+        "account_ref": (account_ref or "").strip() or None,
+        "workers": workers,
+        "states": states,
+        "need_worker": not bool(online),
+    }
+
+
+def claim_job(*, worker_id: str, job_types: list[str] | None = None) -> dict[str, Any] | None:
     wid = (worker_id or "肉机").strip() or "肉机"
     root = _job_dir()
     with _LOCK:
         pending = sorted((root / "pending").glob("*.json"), key=lambda p: p.stat().st_mtime)
-        if not pending:
-            return None
-        src = pending[0]
-        job = _read_json(src)
-        if not job:
-            src.unlink(missing_ok=True)
+        allowed = {str(job_type).strip() for job_type in job_types or [] if str(job_type).strip()}
+        src = None
+        job = None
+        for candidate in pending:
+            candidate_job = _read_json(candidate)
+            if not candidate_job:
+                candidate.unlink(missing_ok=True)
+                continue
+            if allowed and str(candidate_job.get("type") or "") not in allowed:
+                continue
+            src = candidate
+            job = candidate_job
+            break
+        if src is None or job is None:
             return None
         job["status"] = "running"
         job["worker_id"] = wid

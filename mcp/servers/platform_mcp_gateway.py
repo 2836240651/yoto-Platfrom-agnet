@@ -146,6 +146,49 @@ def douyin_chanmama_auth_status() -> dict:
 
 
 @mcp.tool()
+def crossborder_sync_submit(
+    platform: str,
+    account_ref: str,
+    scope: str,
+    date_start: str = "",
+    date_end: str = "",
+    force: bool = False,
+) -> dict:
+    """Queue a read-only Temu, AliExpress, or Amazon sync on the existing meat worker."""
+    try:
+        job = djq.enqueue_crossborder_sync(
+            platform=platform,
+            account_ref=account_ref,
+            scope=scope,
+            date_start=date_start,
+            date_end=date_end,
+            force=force,
+        )
+    except ValueError as exc:
+        return {"ok": False, "error": str(exc)}
+    return {
+        "ok": True,
+        "job_id": job["id"],
+        "status": job["status"],
+        "platform": job["args"]["platform"],
+        "account_ref": job["args"]["account_ref"],
+        "scope": job["args"]["scope"],
+    }
+
+
+@mcp.tool()
+def crossborder_sync_status(job_id: str) -> dict:
+    """Return sanitized status for a previously queued cross-border sync."""
+    return djq.get_crossborder_sync(job_id)
+
+
+@mcp.tool()
+def crossborder_auth_status(platform: str = "", account_ref: str = "") -> dict:
+    """Return worker/platform readiness without cookies, tokens, or browser OAuth values."""
+    return djq.crossborder_auth_status(platform=platform, account_ref=account_ref)
+
+
+@mcp.tool()
 async def douyin_collect_hot_keywords(
     seed: str,
     date_range_days: int = 30,
@@ -204,7 +247,11 @@ async def worker_claim(request: Request) -> JSONResponse:
     if not djq.worker_token_ok(request.headers.get("authorization")):
         return _unauthorized()
     body = await _read_json(request)
-    job = djq.claim_job(worker_id=str(body.get("worker_id") or "肉机"))
+    job_types = body.get("job_types") if isinstance(body.get("job_types"), list) else None
+    job = djq.claim_job(
+        worker_id=str(body.get("worker_id") or "肉机"),
+        job_types=[str(job_type) for job_type in job_types] if job_types is not None else None,
+    )
     if not job:
         return JSONResponse({"ok": True, "job": None})
     return JSONResponse({"ok": True, "job": job})

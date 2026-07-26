@@ -9,11 +9,13 @@ ROOT = Path(SPECPATH).resolve().parents[1]
 MW = ROOT / "apps" / "meat-worker"
 CLIENT = ROOT / "mcp" / "servers" / "douyin_chanmama_client.py"
 PW_DRIVER = Path(playwright.__file__).resolve().parent / "driver"
+CROSSBORDER_VENDOR = MW / "crossborder" / "vendor"
 
 datas = [
     (str(CLIENT), "."),
     (str(MW / "config.example.json"), "."),
     (str(MW / "playwright_bootstrap.py"), "."),
+    (str(CROSSBORDER_VENDOR), "crossborder/vendor"),
     # Critical: playwright looks for driver/node.exe + package/cli.js
     (str(PW_DRIVER), "playwright/driver"),
 ]
@@ -30,6 +32,12 @@ hiddenimports = [
     "playwright_bootstrap",
     "handlers",
     "handlers.douyin_collect",
+    "handlers.crossborder_sync",
+    "crossborder",
+    "crossborder.contract",
+    "crossborder.dispatch",
+    "crossborder.temu_sync",
+    "crossborder.aliexpress_sync",
     "config",
     "worker_core",
     "ui",

@@ -128,12 +128,22 @@ class MeatWorker:
                 "detail": {
                     "need_login": bool(login.get("need_login")),
                     "error": login.get("error"),
+                    "job_types": sorted(self.handlers),
+                    "platforms": {
+                        platform: {"available": "crossborder_sync" in self.handlers}
+                        for platform in ("temu", "aliexpress")
+                    },
                 },
             },
         )
 
     def claim(self) -> dict[str, Any] | None:
-        out = self._request("POST", "/worker/claim", {"worker_id": self.cfg.worker_id})
+        job_types = sorted(self.handlers)
+        if not bool((self.state.login or {}).get("logged_in")):
+            job_types = [job_type for job_type in job_types if job_type != "douyin_collect_hot_keywords"]
+        out = self._request(
+            "POST", "/worker/claim", {"worker_id": self.cfg.worker_id, "job_types": job_types}
+        )
         job = out.get("job")
         return job if isinstance(job, dict) else None
 
@@ -291,9 +301,7 @@ class MeatWorker:
                     logger.warning("heartbeat error: %s", exc)
                 self._emit()
 
-                if self.state.claim_enabled and self.cfg.claim_enabled and self.state.login.get(
-                    "logged_in"
-                ):
+                if self.state.claim_enabled and self.cfg.claim_enabled and self.handlers:
                     try:
                         job = self.claim()
                         if job:
@@ -355,8 +363,12 @@ def setup_logging() -> Path:
 
 def default_handlers() -> dict[str, HandlerFn]:
     from handlers.douyin_collect import handle_douyin_collect
+    from handlers.crossborder_sync import handle_crossborder_sync
 
-    return {"douyin_collect_hot_keywords": handle_douyin_collect}
+    return {
+        "douyin_collect_hot_keywords": handle_douyin_collect,
+        "crossborder_sync": handle_crossborder_sync,
+    }
 
 
 def run_headless() -> int:

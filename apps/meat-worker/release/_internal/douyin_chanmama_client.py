@@ -545,11 +545,11 @@ class ChanmamaSession:
         }
 
     @staticmethod
-    def _product_rows(items: list[dict[str, Any]], *, term: str, level: str, source: str) -> list[dict[str, Any]]:
+    def _product_rows(items: list[dict[str, Any]], *, term: str, level: str, source: str, dimension: str = "variant") -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []
         for item in items:
             title = str(item.get("title") or "").strip()
-            if not title:
+            if not title or not _seed_related(title, term):
                 continue
             rows.append(
                 {
@@ -561,6 +561,7 @@ class ChanmamaSession:
                     "queried_term": term,
                     "query_level": level,
                     "query_source": source,
+                    "query_dimension": dimension,
                     "relation_to_seed": "exact_query_match",
                     "source_route": "spu_search",
                 }
@@ -568,7 +569,7 @@ class ChanmamaSession:
         return rows
 
     @staticmethod
-    def _video_rows(items: list[dict[str, Any]], *, term: str, level: str, source: str) -> list[dict[str, Any]]:
+    def _video_rows(items: list[dict[str, Any]], *, term: str, level: str, source: str, dimension: str = "variant") -> list[dict[str, Any]]:
         rows: list[dict[str, Any]] = []
         for item in items:
             aweme = item.get("aweme_info") if isinstance(item.get("aweme_info"), dict) else {}
@@ -581,7 +582,7 @@ class ChanmamaSession:
                 or product.get("title")
                 or ""
             ).strip()
-            if not title:
+            if not title or not _seed_related(title, term):
                 continue
             rows.append(
                 {
@@ -593,6 +594,7 @@ class ChanmamaSession:
                     "queried_term": term,
                     "query_level": level,
                     "query_source": source,
+                    "query_dimension": dimension,
                     "relation_to_seed": "exact_query_match",
                     "source_route": "aweme_search",
                 }
@@ -619,7 +621,7 @@ class ChanmamaSession:
                 "seed": seed,
             }
 
-        queries = [{"term": seed, "level": "seed", "source": "seed"}]
+        queries = [{"term": seed, "level": "seed", "source": "seed", "dimension": "seed"}]
         seen_terms = {seed}
         for item in query_plan or []:
             term = str(item.get("term") or "").strip() if isinstance(item, dict) else ""
@@ -630,6 +632,7 @@ class ChanmamaSession:
                         "term": term,
                         "level": "explicit_expansion",
                         "source": str(item.get("source") or "operator_expansion"),
+                        "dimension": str(item.get("query_dimension") or "variant"),
                     }
                 )
 
@@ -657,6 +660,7 @@ class ChanmamaSession:
                             "queried_term": term,
                             "query_level": query["level"],
                             "query_source": query["source"],
+                            "query_dimension": query["dimension"],
                             "request": {"keyword": term},
                             "http_status": None,
                             "err_code": None,
@@ -666,13 +670,27 @@ class ChanmamaSession:
                             "error": str(exc)[:200],
                         }
                     )
-                    attempts.append({"term": term, "level": query["level"], "route": f"{chain}_ui_search", "result_count": 0})
+                    attempts.append(
+                        {
+                            "term": term,
+                            "level": query["level"],
+                            "dimension": query["dimension"],
+                            "route": f"{chain}_ui_search",
+                            "result_count": 0,
+                        }
+                    )
                     errors.append(f"{chain}({term}): {str(exc)[:200]}")
                     continue
 
                 payload = result.get("payload") if isinstance(result.get("payload"), dict) else {}
                 items = _response_items(payload)
-                parsed = parser(items, term=term, level=query["level"], source=query["source"])
+                parsed = parser(
+                    items,
+                    term=term,
+                    level=query["level"],
+                    source=query["source"],
+                    dimension=query["dimension"],
+                )
                 if chain == "video":
                     video_rows.extend(parsed)
                 else:
@@ -685,6 +703,7 @@ class ChanmamaSession:
                         "queried_term": term,
                         "query_level": query["level"],
                         "query_source": query["source"],
+                        "query_dimension": query["dimension"],
                         "request": result.get("request") or {"keyword": term},
                         "http_status": result.get("http_status"),
                         "err_code": err_code,
@@ -694,7 +713,7 @@ class ChanmamaSession:
                         "error": error,
                     }
                 )
-                attempts.append({"term": term, "level": query["level"], "route": result.get("route"), "result_count": len(parsed)})
+                attempts.append({"term": term, "level": query["level"], "dimension": query["dimension"], "route": result.get("route"), "result_count": len(parsed)})
                 traces.append({"tool": result.get("route"), "query": term, "errCode": err_code, "n": len(items)})
                 if error:
                     errors.append(f"{result.get('route')}({term}): {error}")
@@ -714,6 +733,7 @@ class ChanmamaSession:
                 "queried_term": item.get("queried_term"),
                 "query_level": item.get("query_level"),
                 "query_source": item.get("query_source"),
+                "query_dimension": item.get("query_dimension"),
                 "relation_to_seed": item.get("relation_to_seed"),
                 "source_route": item.get("source_route"),
             }
