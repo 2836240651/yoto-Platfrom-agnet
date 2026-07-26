@@ -31,10 +31,10 @@ def test_resolve_tier_default_light():
     assert resolve_tier("ops_analysis") == "heavy"
 
 
-def test_catalog_ops_analysis_uses_heavy_model_name():
+def test_catalog_ops_analysis_uses_service_default_model_when_unpinned():
     _key, model, _base, tier = resolve_chat_endpoint(task="ops_analysis")
     assert tier == "heavy"
-    assert model  # from settings heavy default
+    assert model == "gpt-5.6"
 
 
 def test_pin_luna_overrides_intent_task():

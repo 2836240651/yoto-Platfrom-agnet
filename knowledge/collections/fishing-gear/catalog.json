@@ -1,0 +1,76 @@
+{
+  "version": 1,
+  "name": "渔具全品类词典",
+  "scope": "用于渔具相关输入的标准词、别名与窄变体召回；不代表未经 SKU 验证的现货承诺。",
+  "categories": [
+    {"name": "鱼竿", "entries": [
+      {"canonical": "台钓竿", "aliases": ["手竿", "台钓杆"], "variants": ["台钓竿测评"], "tags": ["淡水", "手竿"]},
+      {"canonical": "鲫鱼竿", "aliases": ["鲫竿"], "variants": ["鲫鱼竿轻量"], "tags": ["淡水", "轻量"]},
+      {"canonical": "鲤鱼竿", "aliases": ["鲤竿"], "variants": ["鲤鱼竿腰力"], "tags": ["淡水", "鲤鱼"]},
+      {"canonical": "大物竿", "aliases": ["巨物竿", "大物杆"], "variants": ["大物竿钓法"], "tags": ["淡水", "大物"]},
+      {"canonical": "路亚竿", "aliases": ["路亚杆"], "variants": ["路亚竿调性"], "tags": ["路亚"]},
+      {"canonical": "海竿", "aliases": ["远投海竿"], "variants": ["海竿远投"], "tags": ["海钓", "远投"]},
+      {"canonical": "矶钓竿", "aliases": ["矶竿"], "variants": ["矶钓竿远投"], "tags": ["海钓"]},
+      {"canonical": "筏竿", "aliases": ["筏钓竿"], "variants": ["筏竿轮组"], "tags": ["筏钓"]},
+      {"canonical": "前打竿", "aliases": ["前打杆"], "variants": ["前打竿钓法"], "tags": ["海钓"]},
+      {"canonical": "飞钓竿", "aliases": ["飞蝇竿"], "variants": ["飞钓竿配线"], "tags": ["飞钓"]},
+      {"canonical": "冰钓竿", "aliases": ["冰钓杆"], "variants": ["冰钓竿套装"], "tags": ["冰钓"]}
+    ]},
+    {"name": "渔轮", "entries": [
+      {"canonical": "纺车轮", "aliases": ["纺车轮渔轮"], "variants": ["纺车轮线杯"], "tags": ["渔轮"]},
+      {"canonical": "水滴轮", "aliases": ["水滴轮渔轮"], "variants": ["水滴轮抛投"], "tags": ["路亚", "渔轮"]},
+      {"canonical": "鼓轮", "aliases": ["鼓式轮"], "variants": ["鼓轮海钓"], "tags": ["海钓", "渔轮"]},
+      {"canonical": "筏钓轮", "aliases": ["筏轮"], "variants": ["筏钓轮微铅"], "tags": ["筏钓", "渔轮"]},
+      {"canonical": "飞钓轮", "aliases": ["飞蝇轮"], "variants": ["飞钓轮配线"], "tags": ["飞钓", "渔轮"]}
+    ]},
+    {"name": "鱼线", "entries": [
+      {"canonical": "尼龙鱼线", "aliases": ["尼龙线"], "variants": ["尼龙鱼线主线"], "tags": ["线组"]},
+      {"canonical": "PE线", "aliases": ["编织线", "大力马线"], "variants": ["PE线号数"], "tags": ["路亚", "线组"]},
+      {"canonical": "碳线", "aliases": ["碳素线", "氟碳线"], "variants": ["碳线前导"], "tags": ["前导线"]},
+      {"canonical": "主线", "aliases": ["钓鱼主线"], "variants": ["主线搭配"], "tags": ["线组"]},
+      {"canonical": "子线", "aliases": ["钓鱼子线"], "variants": ["子线长度"], "tags": ["线组"]}
+    ]},
+    {"name": "鱼钩与钓组", "entries": [
+      {"canonical": "海夕鱼钩", "aliases": ["海夕", "海夕钩"], "variants": ["海夕钩"], "tags": ["鱼钩"]},
+      {"canonical": "袖钩", "aliases": ["金袖钩"], "variants": ["袖钩型号"], "tags": ["鱼钩"]},
+      {"canonical": "伊势尼鱼钩", "aliases": ["伊势尼", "伊势尼钩"], "variants": ["伊势尼钩"], "tags": ["鱼钩"]},
+      {"canonical": "新关东鱼钩", "aliases": ["新关东", "新关东钩"], "variants": ["新关东钩"], "tags": ["鱼钩"]},
+      {"canonical": "千又鱼钩", "aliases": ["千又", "千又钩"], "variants": ["千又钩"], "tags": ["鱼钩"]},
+      {"canonical": "串钩", "aliases": ["串钩线组"], "variants": ["串钩绑法"], "tags": ["钓组"]},
+      {"canonical": "爆炸钩", "aliases": ["爆炸钩线组"], "variants": ["爆炸钩饵料"], "tags": ["钓组"]},
+      {"canonical": "反底钓", "aliases": ["反底钓法", "反底钓组"], "variants": ["反底钓法", "反底钓线组"], "tags": ["钓法", "线组"]}
+    ]},
+    {"name": "浮漂与铅坠", "entries": [
+      {"canonical": "浮漂", "aliases": ["鱼漂", "漂"], "variants": ["浮漂调钓"], "tags": ["台钓"]},
+      {"canonical": "铅坠", "aliases": ["铅皮座", "铅坠座"], "variants": ["铅坠配重"], "tags": ["配件"]},
+      {"canonical": "钨钢坠", "aliases": ["钨坠"], "variants": ["钨钢坠路亚"], "tags": ["路亚", "配件"]}
+    ]},
+    {"name": "拟饵", "entries": [
+      {"canonical": "米诺", "aliases": ["minnow"], "variants": ["米诺拟饵"], "tags": ["路亚", "硬饵"]},
+      {"canonical": "波爬", "aliases": ["popper"], "variants": ["波爬拟饵"], "tags": ["路亚", "硬饵"]},
+      {"canonical": "铅笔饵", "aliases": ["铅笔"], "variants": ["铅笔饵拟饵"], "tags": ["路亚", "硬饵"]},
+      {"canonical": "亮片", "aliases": ["勺型亮片"], "variants": ["亮片拟饵"], "tags": ["路亚", "硬饵"]},
+      {"canonical": "软虫", "aliases": ["软饵", "T尾"], "variants": ["软虫路亚"], "tags": ["路亚", "软饵"]},
+      {"canonical": "铅头钩", "aliases": ["jighead"], "variants": ["铅头钩配软虫"], "tags": ["路亚", "钓组"]},
+      {"canonical": "VIB拟饵", "aliases": ["VIB"], "variants": ["VIB路亚"], "tags": ["路亚", "硬饵"]},
+      {"canonical": "木虾", "aliases": ["鱿鱼钩", "egi"], "variants": ["木虾鱿鱼"], "tags": ["海钓", "拟饵"]}
+    ]},
+    {"name": "饵料", "entries": [
+      {"canonical": "商品饵", "aliases": ["饵料"], "variants": ["商品饵搭配"], "tags": ["淡水", "饵料"]},
+      {"canonical": "拉饵", "aliases": ["拉饵盘"], "variants": ["拉饵开饵"], "tags": ["淡水", "饵料"]},
+      {"canonical": "玉米饵", "aliases": ["嫩玉米"], "variants": ["玉米饵钓鲤鱼"], "tags": ["淡水", "饵料"]},
+      {"canonical": "虾饵", "aliases": ["虾滑饵"], "variants": ["虾饵开饵"], "tags": ["淡水", "饵料"]}
+    ]},
+    {"name": "渔具配件", "entries": [
+      {"canonical": "抄网", "aliases": ["捞鱼网", "抄网头"], "variants": ["抄网杆"], "tags": ["配件"]},
+      {"canonical": "鱼护", "aliases": ["鱼护网"], "variants": ["鱼护加厚"], "tags": ["配件"]},
+      {"canonical": "竿包", "aliases": ["鱼竿包"], "variants": ["竿包容量"], "tags": ["收纳"]},
+      {"canonical": "钓箱", "aliases": ["钓鱼箱"], "variants": ["钓箱配件"], "tags": ["收纳"]},
+      {"canonical": "钓椅", "aliases": ["钓鱼椅"], "variants": ["钓椅配件"], "tags": ["户外"]},
+      {"canonical": "竿架", "aliases": ["炮台", "支架"], "variants": ["竿架调节"], "tags": ["配件"]},
+      {"canonical": "控鱼器", "aliases": ["鱼嘴钳", "控鱼钳"], "variants": ["控鱼器路亚"], "tags": ["路亚", "配件"]},
+      {"canonical": "探鱼器", "aliases": ["鱼探", "声呐"], "variants": ["探鱼器船钓"], "tags": ["电子装备"]},
+      {"canonical": "涉水裤", "aliases": ["连体雨裤", "钓鱼涉水裤"], "variants": ["涉水裤钓鱼"], "tags": ["服装"]}
+    ]}
+  ]
+}

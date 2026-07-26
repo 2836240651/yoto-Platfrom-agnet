@@ -32,6 +32,8 @@ class AgentState(TypedDict, total=False):
     include_video: bool
     include_product: bool
     date_range_days: int
+    query_plan: list[dict[str, str]]
+    kb_context: list[dict[str, Any]]
 
     excel_path: str
     shop_id: str

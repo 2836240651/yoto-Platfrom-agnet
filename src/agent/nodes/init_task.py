@@ -8,6 +8,7 @@ from langchain_core.messages import HumanMessage
 
 from agent.budget import init_budget_fields
 from agent.constants import SKILL_PLANS
+from agent.knowledge.fishing_gear import plan_fishing_gear_queries
 from agent.nodes.helpers import append_event
 from agent.state import AgentState
 
@@ -49,6 +50,13 @@ def init_task(state: AgentState) -> dict:
         if skill != "douyin-keyword-research":
             skill = "douyin-keyword-research"
     first_name = plan[0]["name"] if plan else "collect"
+    kb = plan_fishing_gear_queries(seed) if skill == "douyin-keyword-research" else {}
+    provided_query_plan = state.get("query_plan")
+    query_plan = (
+        list(provided_query_plan)
+        if isinstance(provided_query_plan, list)
+        else list(kb.get("query_plan") or [])
+    )
 
     overrides = SKILL_INIT.get(skill, {})
     msg_fn = overrides.get("message_fn")
@@ -76,12 +84,20 @@ def init_task(state: AgentState) -> dict:
         "title": state.get("title") or "",
         "tags": list(state.get("tags") or []),
         "model_id": state.get("model_id"),
+        "query_plan": query_plan,
+        "kb_context": [kb] if kb.get("matched") else [],
         "status": "planning",
         "current_step": 0,
         "collected_data": {},
         "errors": [],
         "dead_ends": [],
-        "events": append_event(state, "init_task", "任务已初始化"),
+        "events": append_event(
+            state,
+            "init_task",
+            "任务已初始化",
+            query_plan_count=len(query_plan),
+            kb_canonical=kb.get("canonical") or None,
+        ),
         "messages": [HumanMessage(content=msg)],
         "run_started_at": time.time(),
         "micro_route": None,

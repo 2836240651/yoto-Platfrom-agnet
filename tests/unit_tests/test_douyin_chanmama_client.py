@@ -8,6 +8,37 @@ def test_seed_related():
     assert client._seed_related("渔具装备", "渔具")
     assert client._seed_related("路亚竿", "路亚")
     assert not client._seed_related("手机壳", "渔具")
+
+
+def test_normal_member_rows_drop_unrelated_search_results():
+    product_rows = client.ChanmamaSession._product_rows(
+        [
+            {"title": "【试吃两枚】特大号无铅松花蛋70-80g大号海鸭蛋"},
+            {"title": "海南琼珍酥皮月饼蛋黄豆蓉老字号"},
+            {"title": "久岩升级版金海夕成品子线双钩"},
+        ],
+        term="海夕钩",
+        level="explicit_expansion",
+        source="fishing_gear_kb",
+    )
+    video_rows = client.ChanmamaSession._video_rows(
+        [
+            {
+                "aweme_info": {"desc": "婚宴散场时我的高跟鞋里像灌了铅"},
+                "product_info": {"title": "桥筏套装筏钓轮冬微铅缓降"},
+            },
+            {
+                "aweme_info": {"desc": "筏钓轮微铅缓降实战演示"},
+                "product_info": {"title": "桥筏套装"},
+            },
+        ],
+        term="筏钓轮微铅",
+        level="explicit_expansion",
+        source="fishing_gear_kb",
+    )
+
+    assert [row["word"] for row in product_rows] == ["久岩升级版金海夕成品子线双钩"]
+    assert [row["word"] for row in video_rows] == ["筏钓轮微铅缓降实战演示"]
 def test_bridge_seeds_do_not_implicitly_expand_niche_terms():
     assert client.bridge_seeds("欧鲤钓") == []
     assert client.bridge_seeds("反底钓") == []

@@ -26,11 +26,11 @@ class Settings(BaseSettings):
     # NewAPI / OpenAI-compatible gateway (shared default base).
     openai_api_base: str = "https://api.hyhacct.com/v1"
     # Legacy aliases → heavy tier (backward compatible).
-    llm_model: str = "gpt-5.6-luna"
+    llm_model: str = "gpt-5.6"
     # Heavy: complex ops analysis / plan writing.
     llm_heavy_api_key: str = ""
     llm_heavy_api_base: str = ""
-    llm_heavy_model: str = "gpt-5.6-luna"
+    llm_heavy_model: str = "gpt-5.6"
     # Light: summary / extract / intent / memory compress / format.
     llm_light_api_key: str = ""
     llm_light_api_base: str = ""

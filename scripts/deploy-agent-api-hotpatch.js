@@ -45,6 +45,8 @@ const REL_FILES = [
   "src/agent/constants.py",
   "src/agent/llm.py",
   "src/agent/config/settings.py",
+  "src/agent/knowledge/__init__.py",
+  "src/agent/knowledge/fishing_gear.py",
   "src/agent/tools/douyin_analyze.py",
   "src/agent/tools/step_handlers.py",
   "src/agent/tools/stub_dispatch.py",
@@ -69,6 +71,8 @@ const REL_FILES = [
   "skills/douyin-keyword-research/SKILL.md",
   "skills/douyin-keyword-research/schema/input.json",
   "skills/douyin-keyword-research/schema/output.json",
+  "knowledge/collections/fishing-gear/catalog.json",
+  "knowledge/collections/fishing-gear/README.md",
 ];
 
 function exec(conn, cmd) {
@@ -158,6 +162,8 @@ vals = {
     "DOUYIN_WORKER_URL": "https://www.yoto.work/platform-mcp",
     "AGENT_ENV": "prod",
     "MCP_ALLOW_STUB_FALLBACK": "false",
+    "LLM_MODEL": "gpt-5.6",
+    "LLM_HEAVY_MODEL": "gpt-5.6",
 }
 for k, v in vals.items():
     if re.search(rf"^{k}=.*$", text, flags=re.M):

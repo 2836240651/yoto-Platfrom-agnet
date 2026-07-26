@@ -146,10 +146,10 @@ async function main() {
   const openai = (process.env.OPENAI_API_KEY || "").trim();
   const openaiBase =
     (process.env.OPENAI_API_BASE || "").trim() || "https://api.hyhacct.com/v1";
-  const llmModel = (process.env.LLM_MODEL || "").trim() || "gpt-5.6-luna";
+  const llmModel = (process.env.LLM_MODEL || "").trim() || "gpt-5.6";
   const heavyKey = (process.env.LLM_HEAVY_API_KEY || "").trim() || openai;
   const heavyModel =
-    (process.env.LLM_HEAVY_MODEL || "").trim() || llmModel || "gpt-5.6-luna";
+    (process.env.LLM_HEAVY_MODEL || "").trim() || llmModel || "gpt-5.6";
   const lightKey = (process.env.LLM_LIGHT_API_KEY || "").trim();
   const lightModel =
     (process.env.LLM_LIGHT_MODEL || "").trim() || "agnes-2.0-flash";

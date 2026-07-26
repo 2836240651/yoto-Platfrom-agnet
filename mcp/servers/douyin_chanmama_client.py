@@ -549,7 +549,7 @@ class ChanmamaSession:
         rows: list[dict[str, Any]] = []
         for item in items:
             title = str(item.get("title") or "").strip()
-            if not title:
+            if not title or not _seed_related(title, term):
                 continue
             rows.append(
                 {
@@ -581,7 +581,7 @@ class ChanmamaSession:
                 or product.get("title")
                 or ""
             ).strip()
-            if not title:
+            if not title or not _seed_related(title, term):
                 continue
             rows.append(
                 {

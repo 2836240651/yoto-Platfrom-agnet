@@ -40,6 +40,22 @@ def format_heat(n: int | float | None) -> str:
 
 
 def _compact_collect(collect: dict[str, Any], *, limit: int = 80) -> list[dict[str, Any]]:
+    lineage: dict[tuple[str, str], dict[str, str]] = {}
+    for item in collect.get("keywords") or []:
+        if not isinstance(item, dict):
+            continue
+        word = str(item.get("word") or item.get("keyword") or "").strip()
+        side = str(item.get("side") or "").strip()
+        if not word or side not in ("video", "product"):
+            continue
+        values = {
+            key: str(item.get(key) or "").strip()
+            for key in ("queried_term", "query_level", "query_source")
+            if str(item.get(key) or "").strip()
+        }
+        if values:
+            lineage[(side, word)] = values
+
     rows: list[dict[str, Any]] = []
     for side, buckets in (
         ("video", ("video_hot", "video_potential")),
@@ -56,7 +72,9 @@ def _compact_collect(collect: dict[str, Any], *, limit: int = 80) -> list[dict[s
                 else:
                     continue
                 if word:
-                    rows.append({"word": word, "hot_level": hot, "side": side, "bucket": layer})
+                    row = {"word": word, "hot_level": hot, "side": side, "bucket": layer}
+                    row.update(lineage.get((side, word), {}))
+                    rows.append(row)
 
     if not rows:
         for item in collect.get("keywords") or []:
@@ -71,14 +89,14 @@ def _compact_collect(collect: dict[str, Any], *, limit: int = 80) -> list[dict[s
             bucket = str(item.get("bucket") or "hot").strip()
             if bucket not in ("hot", "potential"):
                 bucket = "hot"
-            rows.append(
-                {
-                    "word": word,
-                    "hot_level": int(item.get("hot_level") or 0),
-                    "side": side,
-                    "bucket": bucket,
-                }
-            )
+            row = {
+                "word": word,
+                "hot_level": int(item.get("hot_level") or 0),
+                "side": side,
+                "bucket": bucket,
+            }
+            row.update(lineage.get((side, word), {}))
+            rows.append(row)
 
     best: dict[tuple[str, str], dict[str, Any]] = {}
     for r in rows:
@@ -246,6 +264,60 @@ def _split_rows(rows: list[dict[str, Any]]) -> tuple[list[dict], list[dict]]:
     )
 
 
+def _rule_fallback_categories(
+    seed: str,
+    rows: list[dict[str, Any]],
+    *,
+    include_video: bool,
+    include_product: bool,
+) -> dict[str, list[dict]]:
+    """Build deterministic cards from this run's MCP rows without changing side."""
+    categories: dict[str, list[dict]] = {key: [] for key in _BUCKETS}
+    enabled = {"video": include_video, "product": include_product}
+    side_indexes = {"video": 0, "product": 0}
+
+    for row in rows:
+        side = str(row.get("side") or "")
+        if side not in enabled or not enabled[side]:
+            continue
+        bucket = str(row.get("bucket") or "hot")
+        bucket_key = f"{side}_{bucket}"
+        if bucket_key not in categories or len(categories[bucket_key]) >= 12:
+            continue
+
+        word = str(row.get("word") or "").strip()
+        if not word:
+            continue
+        index = side_indexes[side]
+        priority = "P0" if index == 0 else "P1" if index < 5 else "P2"
+        side_indexes[side] = index + 1
+        hot = int(row.get("hot_level") or 0)
+        categories[bucket_key].append(
+            _card(
+                seed,
+                word,
+                priority=priority,
+                reason=(
+                    f"本次蝉妈妈{_side_label(side)}采集热度 {format_heat(hot)}；"
+                    f"与「{seed}」同次查询返回，适合先做验证。"
+                ),
+                action=(
+                    f"围绕「{word}」做一条{_side_label(side)}测试，"
+                    "记录曝光、点击和转化后再决定是否放量。"
+                ),
+                hot=hot,
+                side=side,
+                bucket=bucket_key,
+                evidence=[
+                    f"采集侧别：{_side_label(side)}",
+                    f"蝉妈妈热度：{format_heat(hot)}",
+                    "LLM 深度分析待重试；该词仅作为本次 MCP 原始采集证据保留。",
+                ],
+            )
+        )
+    return categories
+
+
 def analyze_and_optimize(
     state: AgentState,
     collect: dict[str, Any],
@@ -261,6 +333,7 @@ def analyze_and_optimize(
         or "stub"
     )
     video_rows, product_rows = _split_rows(rows)
+    kb_context = [item for item in (state.get("kb_context") or []) if isinstance(item, dict)]
 
     if not rows:
         return {
@@ -288,6 +361,8 @@ def analyze_and_optimize(
     analyze_prompt = (
         f"种子词：{seed}\n"
         f"{bridge_note}"
+        f"【渔具知识库命中】（仅用于理解别名/品类，不得把它补造成未采集词）：\n"
+        f"{json.dumps(kb_context, ensure_ascii=False)}\n\n"
         f"需要视频侧：{include_video}；需要商品侧：{include_product}\n\n"
         f"【视频侧采集词】（只可进入 video_* 栏）：\n"
         f"{json.dumps(video_rows, ensure_ascii=False)}\n\n"
@@ -330,48 +405,43 @@ def analyze_and_optimize(
         analyze_err = str(exc)
 
     if not analyzed:
-        from agent.tools import douyin_stub
-
-        fb = douyin_stub.score_keywords(
+        categories = _rule_fallback_categories(
             seed,
-            raw_keywords=[r["word"] for r in rows],
+            rows,
             include_video=include_video,
             include_product=include_product,
         )
-        cats = fb.get("categories") or {}
-        for bucket, cards in list(cats.items()):
-            side = "product" if str(bucket).startswith("product") else "video"
-            upgraded = []
-            for c in cards or []:
-                if not isinstance(c, dict):
-                    continue
-                word = str(c.get("keyword") or "")
-                hot = next((int(r.get("hot_level") or 0) for r in rows if r.get("word") == word), 0)
-                c = dict(c)
-                c["metrics"] = build_card_metrics(hot=hot, side=side, bucket=str(bucket))
-                upgraded.append(c)
-            cats[bucket] = upgraded
-        fb["categories"] = cats
-        fb["ok"] = True
-        # stub helper hardcodes「数据源：stub」tags — rewrite when collect was real MCP.
-        tags = [t for t in (fb.get("tags") or []) if "stub" not in str(t).lower()]
-        if source == "mcp":
-            tags = [t for t in tags if "数据源" not in str(t)]
-            tags.append("数据源：真实 MCP")
-        elif source == "stub_fallback":
-            tags.append("数据源：MCP 失败已降级")
-        else:
-            tags.append(f"数据源：{source}")
-        fb["tags"] = tags
-        fb.setdefault("alerts", []).insert(
-            0,
-            {
-                "type": "warn",
-                "text": f"LLM 分析失败，已回退规则分层：{analyze_err or 'parse empty'}",
+        all_cards = sum(categories.values(), [])
+        p0_count = sum(1 for card in all_cards if card.get("priority") == "P0")
+        return {
+            "ok": False,
+            "status": "analysis_unavailable",
+            "error": f"LLM 深度分析未完成：{analyze_err or 'parse empty'}",
+            "categories": categories,
+            "summary": {
+                "keyword_count": len(all_cards),
+                "video_sample_count": len(categories["video_hot"]) + len(categories["video_potential"]),
+                "product_sku_count": len(categories["product_hot"]) + len(categories["product_potential"]),
+                "p0_count": p0_count,
             },
-        )
-        fb["data_source"] = {"source": source, "tool": "douyin_analyze_keywords", "mode": "fallback"}
-        return fb
+            "tags": [
+                f"种子词：{seed}",
+                "分析：待重试",
+                "数据源：真实 MCP" if source == "mcp" else f"数据源：{source}",
+            ],
+            "alerts": [
+                {
+                    "type": "warn",
+                    "text": f"LLM 深度分析未完成，已保留本次 MCP 原始词与侧别，等待模型恢复后重试：{analyze_err or 'parse empty'}",
+                }
+            ],
+            "data_source": {
+                "source": source,
+                "tool": "douyin_analyze_keywords",
+                "provider": "chanmama" if source == "mcp" else None,
+                "mode": "analysis_unavailable",
+            },
+        }
 
     optimize_prompt = (
         f"种子词：{seed}\n"
