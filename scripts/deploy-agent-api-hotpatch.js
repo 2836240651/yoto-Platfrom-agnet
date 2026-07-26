@@ -60,6 +60,7 @@ const REL_FILES = [
   "config/tool_registry.json",
   "config/mcp.json",
   "config/mcp.docker.json",
+  "mcp/deploy/api.Dockerfile",
   "apps/api/app/services/tools_status.py",
   "apps/api/app/services/langgraph_runner.py",
   "apps/api/app/services/report_adapter.py",
@@ -162,8 +163,8 @@ vals = {
     "DOUYIN_WORKER_URL": "https://www.yoto.work/platform-mcp",
     "AGENT_ENV": "prod",
     "MCP_ALLOW_STUB_FALLBACK": "false",
-    "LLM_MODEL": "gpt-5.6",
-    "LLM_HEAVY_MODEL": "gpt-5.6",
+    "LLM_MODEL": "gpt-5.6-terra",
+    "LLM_HEAVY_MODEL": "gpt-5.6-terra",
 }
 for k, v in vals.items():
     if re.search(rf"^{k}=.*$", text, flags=re.M):
@@ -205,7 +206,12 @@ print("ok", p)
     scriptLines.push(`docker exec ${CONTAINER} mkdir -p ${inDir}`);
     scriptLines.push(`docker cp ${remote} ${CONTAINER}:${inContainer}`);
   }
-  scriptLines.push(`docker restart ${CONTAINER}`);
+  scriptLines.push(
+    `docker compose -f ${REMOTE_COMPOSE}/docker-compose.yml build agent-api`
+  );
+  scriptLines.push(
+    `docker compose -f ${REMOTE_COMPOSE}/docker-compose.yml up -d --no-deps --force-recreate agent-api`
+  );
   scriptLines.push("sleep 5");
   scriptLines.push("curl -s http://127.0.0.1:18000/api/health || true");
   scriptLines.push("echo");

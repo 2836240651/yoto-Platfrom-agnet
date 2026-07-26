@@ -69,6 +69,11 @@ def model_id_channel(model_id: str) -> LlmTier:
     return "light"
 
 
+def _uses_responses_api(model: str) -> bool:
+    """Route OpenAI/Codex-family models to the provider's Responses endpoint."""
+    return model.startswith("gpt-5.6")
+
+
 def resolve_chat_endpoint(
     *,
     model_id: str | None = None,
@@ -100,6 +105,7 @@ def _cached_chat(model: str, base: str, key: str):
         api_key=key,
         base_url=base,
         temperature=0,
+        use_responses_api=_uses_responses_api(model),
     )
 
 
@@ -128,6 +134,7 @@ def get_chat_model(
             "api_key": key,
             "base_url": base,
             "temperature": 0,
+            "use_responses_api": _uses_responses_api(model),
         }
         kwargs.update(overrides)
         return ChatOpenAI(**kwargs)
@@ -177,6 +184,7 @@ def get_chat_model_for_state(
             "api_key": key,
             "base_url": base,
             "temperature": 0,
+            "use_responses_api": _uses_responses_api(model),
         }
         kwargs.update(overrides)
         return ChatOpenAI(**kwargs)

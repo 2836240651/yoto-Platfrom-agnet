@@ -76,6 +76,40 @@ def test_normalize_categories_preserves_query_dimension_on_final_card():
     assert card["query_dimension"] == "hook"
 
 
+def test_normalize_categories_maps_llm_short_keyword_to_same_side_collected_title():
+    raw_title = "手竿欧鲤反底钓组成品防缠绕前导一体自动找底悬浮离底大物钩线组"
+    rows = [
+        {
+            "word": raw_title,
+            "hot_level": 100,
+            "side": "product",
+            "queried_term": "欧鲤反底钓组",
+            "query_level": "explicit_expansion",
+            "query_source": "fishing_gear_kb",
+            "query_dimension": "product",
+        }
+    ]
+    cats = _normalize_categories(
+        "欧鲤钓",
+        {
+            "product_hot": [
+                {
+                    "keyword": "欧鲤反底钓组",
+                    "reason": "成品钓组需求明确",
+                    "action": "突出自动找底与防缠绕卖点",
+                }
+            ]
+        },
+        rows,
+        include_video=False,
+        include_product=True,
+    )
+
+    assert cats["product_hot"][0]["keyword"] == raw_title
+    assert cats["product_hot"][0]["reason"] == "成品钓组需求明确"
+    assert cats["product_hot"][0]["action"] == "突出自动找底与防缠绕卖点"
+
+
 def test_normalize_categories_from_llm_shape():
     rows = [
         {"word": "鱼竿", "hot_level": 90000, "side": "video", "bucket": "hot"},
@@ -140,6 +174,37 @@ def test_llm_json_uses_ops_analysis_catalog_without_light_tier(monkeypatch):
 
     assert result == {"video_hot": []}
     assert captured["kwargs"] == {"task": "ops_analysis"}
+
+
+def test_llm_json_extracts_text_from_responses_api_content_blocks(monkeypatch):
+    class FakeResponse:
+        content = [
+            {
+                "type": "text",
+                "text": '{"video_hot": [], "strategy": "keep the niche scope"}',
+            }
+        ]
+
+    class FakeModel:
+        def invoke(self, _messages):
+            return FakeResponse()
+
+    import agent.llm
+
+    monkeypatch.setattr(
+        agent.llm,
+        "get_chat_model_for_state",
+        lambda _state, **_kwargs: FakeModel(),
+    )
+
+    result = douyin_analyze._llm_json(
+        {"skill": "douyin-keyword-research"},
+        task="ops_analysis",
+        system="system",
+        user="user",
+    )
+
+    assert result == {"video_hot": [], "strategy": "keep the niche scope"}
 
 
 def test_llm_failure_preserves_real_mcp_words_without_claiming_completed_analysis(monkeypatch):

@@ -122,6 +122,19 @@ def _parse_json_obj(text: str) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
+def _response_text(content: Any) -> str:
+    """Extract text from LangChain string or Responses API content blocks."""
+    if isinstance(content, str):
+        return content
+    if isinstance(content, dict):
+        return _response_text(content.get("text") or content.get("content"))
+    if isinstance(content, list):
+        return "\n".join(
+            text for item in content if (text := _response_text(item)).strip()
+        )
+    return ""
+
+
 def _side_label(side: str) -> str:
     return "商品带货" if side == "product" else "视频内容"
 
@@ -195,6 +208,21 @@ def _allowed_words(rows: list[dict[str, Any]], side: str) -> set[str]:
     return {str(r["word"]) for r in rows if r.get("side") == side and r.get("word")}
 
 
+def _resolve_collected_word(word: str, allowed: set[str]) -> str:
+    """Resolve an LLM-shortened title only to a same-side collected title."""
+    if word in allowed:
+        return word
+    compact = "".join(char for char in word if char.isalnum())
+    if len(compact) < 4:
+        return ""
+    matches = [
+        candidate
+        for candidate in allowed
+        if compact in "".join(char for char in candidate if char.isalnum())
+    ]
+    return min(matches, key=lambda candidate: (len(candidate), candidate)) if matches else ""
+
+
 def _normalize_categories(
     seed: str,
     raw: dict[str, Any],
@@ -231,6 +259,9 @@ def _normalize_categories(
                 continue
             if not word:
                 continue
+            word = _resolve_collected_word(word, allow)
+            if not word:
+                continue
             known = side_of.get(word)
             if known and known != want_side:
                 continue
@@ -263,7 +294,7 @@ def _llm_json(state: AgentState, *, task: str, system: str, user: str) -> dict[s
 
     llm = get_chat_model_for_state(state, task=task)
     resp = llm.invoke([SystemMessage(content=system), HumanMessage(content=user)])
-    text = getattr(resp, "content", None) or str(resp)
+    text = _response_text(getattr(resp, "content", None)) or str(resp)
     return _parse_json_obj(text)
 
 

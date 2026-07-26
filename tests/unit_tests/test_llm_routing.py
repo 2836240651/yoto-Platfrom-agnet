@@ -6,6 +6,7 @@ from agent.constants import ALLOWED_MODEL_IDS
 from agent.llm import (
     HEAVY_TASKS,
     LIGHT_TASKS,
+    _uses_responses_api,
     resolve_chat_endpoint,
     resolve_tier,
 )
@@ -34,7 +35,7 @@ def test_resolve_tier_default_light():
 def test_catalog_ops_analysis_uses_service_default_model_when_unpinned():
     _key, model, _base, tier = resolve_chat_endpoint(task="ops_analysis")
     assert tier == "heavy"
-    assert model == "gpt-5.6"
+    assert model == "gpt-5.6-terra"
 
 
 def test_pin_luna_overrides_intent_task():
@@ -63,6 +64,12 @@ def test_allowlist_covers_picker():
     assert "gpt-5.6-luna" in ALLOWED_MODEL_IDS
     assert "gpt-5.6-sol" in ALLOWED_MODEL_IDS
     assert "gpt-5.6-terra" in ALLOWED_MODEL_IDS
+
+
+def test_gpt_56_models_use_responses_api():
+    assert _uses_responses_api("gpt-5.6-terra") is True
+    assert _uses_responses_api("gpt-5.6-luna") is True
+    assert _uses_responses_api("agnes-2.0-flash") is False
 
 
 def test_for_state_forwards_model_id():

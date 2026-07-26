@@ -11,6 +11,7 @@ COPY pyproject.toml README.md ./
 COPY src ./src
 COPY config ./config
 COPY skills ./skills
+COPY knowledge ./knowledge
 COPY apps/api ./apps/api
 
 # China PyPI mirror — docker.io/pypi.org pulls are too slow on this host.
