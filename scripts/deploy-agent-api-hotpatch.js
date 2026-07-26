@@ -118,7 +118,17 @@ async function main() {
     console.error("Set DEPLOY_PASS (or $env:P) in repo .env");
     process.exit(1);
   }
-  const douyinToken = (process.env.DOUYIN_WORKER_TOKEN || "").trim();
+const douyinToken = (process.env.DOUYIN_WORKER_TOKEN || "").trim();
+const commanderAccessToken = (process.env.COMMANDER_ACCESS_TOKEN || "").trim();
+const commanderApiBase = (
+  process.env.COMMANDER_API_BASE || "https://www.yoto.work/api/v1"
+).trim();
+const commanderDefaultAgentId = (
+  process.env.COMMANDER_DEFAULT_AGENT_ID || "肉机"
+).trim();
+const commanderDefaultPlatform = (
+  process.env.COMMANDER_DEFAULT_PLATFORM || "temu"
+).trim();
   const conn = new Client();
   await new Promise((resolve, reject) => {
     conn
@@ -161,6 +171,10 @@ text = p.read_text(encoding="utf-8") if p.exists() else ""
 vals = {
     "DOUYIN_WORKER_TOKEN": ${JSON.stringify(douyinToken)},
     "DOUYIN_WORKER_URL": "https://www.yoto.work/platform-mcp",
+    "COMMANDER_API_BASE": ${JSON.stringify(commanderApiBase)},
+    "COMMANDER_ACCESS_TOKEN": ${JSON.stringify(commanderAccessToken)},
+    "COMMANDER_DEFAULT_AGENT_ID": ${JSON.stringify(commanderDefaultAgentId)},
+    "COMMANDER_DEFAULT_PLATFORM": ${JSON.stringify(commanderDefaultPlatform)},
     "AGENT_ENV": "prod",
     "MCP_ALLOW_STUB_FALLBACK": "false",
     "LLM_MODEL": "gpt-5.6-terra",

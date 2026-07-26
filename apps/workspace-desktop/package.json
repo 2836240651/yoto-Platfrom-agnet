@@ -17,27 +17,16 @@
     "productName": "TUODIAO",
     "copyright": "Copyright TUODIAO",
     "directories": {
-      "output": "dist-electron",
-      "buildResources": "build"
+      "output": "dist-electron"
     },
     "asar": true,
     "files": [
       "main.cjs",
       "preload.cjs",
       "package.json",
-      "build/icon.ico",
-      "build/icon.png",
       "web-dist/**/*"
     ],
-    "extraResources": [
-      {
-        "from": "build",
-        "to": "build",
-        "filter": ["icon.ico", "icon.png"]
-      }
-    ],
     "win": {
-      "icon": "build/icon.ico",
       "target": [
         {
           "target": "nsis",
@@ -55,10 +44,7 @@
       "allowToChangeInstallationDirectory": true,
       "createDesktopShortcut": true,
       "createStartMenuShortcut": true,
-      "shortcutName": "TUODIAO",
-      "installerIcon": "build/icon.ico",
-      "uninstallerIcon": "build/icon.ico",
-      "installerHeaderIcon": "build/icon.ico"
+      "shortcutName": "TUODIAO"
     },
     "portable": {
       "artifactName": "TUODIAO-${version}-portable.exe"

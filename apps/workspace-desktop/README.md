@@ -2,7 +2,7 @@
 
 成员端客户端。因线上 `/agent-platform/` 目前只有 API、没有 SPA，EXE **内置** `apps/web` 构建，本机代理 `/api` 到线上。
 
-图标：`build/icon.ico`。与闲置机 **MeatWorker.exe** 完全分离。
+当前使用 Electron 默认图标；与闲置机 **MeatWorker.exe** 完全分离。
 
 ## 角色对照
 
